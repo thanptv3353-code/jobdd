@@ -2,11 +2,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { JobCard } from "@/components/job-card";
-import { getHomeStats, getOpenJobs } from "@/lib/queries";
-import { COUNTRY_LABEL, COUNTRY_LIST } from "@/lib/types";
+import { getCountries, getHomeStats, getOpenJobs } from "@/lib/queries";
 
 export default async function HomePage() {
-  const [jobs, stats] = await Promise.all([getOpenJobs(), getHomeStats()]);
+  const [jobs, stats, countries] = await Promise.all([getOpenJobs(), getHomeStats(), getCountries()]);
   const featured = jobs.slice(0, 6);
 
   return (
@@ -37,7 +36,7 @@ export default async function HomePage() {
             <StatCard label="ຜູ້ຫາງານທີ່ຍັງວ່າງ" value={stats.available_workers} accent="text-emerald-700" />
             <StatCard label="ຕຳແໜ່ງງານເປີດຮັບ" value={stats.open_jobs} accent="text-sky-700" />
             <StatCard label="ບໍລິສັດສະມາຊິກ" value={stats.members} accent="text-violet-700" />
-            <StatCard label="ປະເທດປາຍທາງ" value={COUNTRY_LIST.length} accent="text-amber-700" />
+            <StatCard label="ປະເທດປາຍທາງ" value={countries.length} accent="text-amber-700" />
           </div>
         </div>
       </section>
@@ -68,13 +67,13 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="mb-6 text-2xl font-bold">ປະເທດປາຍທາງ</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {COUNTRY_LIST.map((c) => (
-              <Link key={c} href={`/jobs?country=${c}`}>
+            {countries.map((c) => (
+              <Link key={c.code} href={`/jobs?country=${c.code}`}>
                 <Card className="h-full transition-shadow hover:shadow-md">
                   <CardContent className="pt-6">
-                    <p className="text-lg font-semibold">{COUNTRY_LABEL[c]}</p>
+                    <p className="text-lg font-semibold">{c.label}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {jobs.filter((j) => j.country === c).length} ຕຳແໜ່ງເປີດຮັບ
+                      {jobs.filter((j) => j.country === c.code).length} ຕຳແໜ່ງເປີດຮັບ
                     </p>
                   </CardContent>
                 </Card>

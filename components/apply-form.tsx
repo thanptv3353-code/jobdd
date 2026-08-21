@@ -7,9 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { FileUploadField } from "@/components/file-upload-field";
+import { AddressGroup } from "@/components/address-group";
+import { useCountries } from "@/components/countries-provider";
 import { registerWorker, submitApplication } from "@/lib/actions";
 import { checkEligibility, docLabel } from "@/lib/eligibility";
-import { COUNTRY_LABEL } from "@/lib/types";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Job = Database["public"]["Tables"]["jobs"]["Row"] & {
@@ -21,23 +23,31 @@ const STEPS = ["ຂໍ້ມູນສ່ວນຕົວ", "ເອກະສານ
 
 export function ApplyForm({ job, requirements }: { job: Job; requirements: Requirement[] }) {
   const router = useRouter();
+  const { label, get } = useCountries();
   const [isPending, startTransition] = useTransition();
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [dob, setDob] = useState("");
-  const [province, setProvince] = useState("");
-  const [documents, setDocuments] = useState<Record<string, boolean>>({});
+  const [permVillage, setPermVillage] = useState("");
+  const [permDistrict, setPermDistrict] = useState("");
+  const [permProvince, setPermProvince] = useState("");
+  const [curVillage, setCurVillage] = useState("");
+  const [curDistrict, setCurDistrict] = useState("");
+  const [curProvince, setCurProvince] = useState("");
+  const [workerId, setWorkerId] = useState<string | null>(null);
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const eligibility = useMemo(() => checkEligibility(job.country, dob, requirements), [job.country, dob, requirements]);
-  const missingDocs = requirements.filter((r) => r.required && !documents[r.doc_type]);
+  const country = get(job.country);
+  const eligibility = useMemo(() => checkEligibility(dob, country), [dob, country]);
+  const missingDocs = requirements.filter((r) => r.required && !uploadedDocs[r.doc_type]);
 
   const canGoStep1 = name.trim() && phone.trim() && dob && eligibility.eligible;
 
-  function handleSubmit() {
+  function handleNextFromStep0() {
     setError(null);
     startTransition(async () => {
       try {
@@ -46,14 +56,32 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
           gender: "male",
           phone,
           dob,
-          province,
+          permVillage,
+          permDistrict,
+          permProvince,
+          curVillage,
+          curDistrict,
+          curProvince,
           preferredCountries: [job.country],
         });
+        setWorkerId(worker.id);
+        setStep(1);
+      } catch {
+        setError("ເກີດຂໍ້ຜິດພາດ ກະລຸນາລອງໃໝ່ອີກຄັ້ງ");
+      }
+    });
+  }
+
+  function handleSubmit() {
+    if (!workerId) return;
+    setError(null);
+    startTransition(async () => {
+      try {
         await submitApplication({
-          workerId: worker.id,
+          workerId,
           jobId: job.id,
           country: job.country,
-          documents,
+          documents: uploadedDocs,
         });
         setSubmitted(true);
       } catch {
@@ -81,7 +109,7 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <p className="text-sm text-muted-foreground">ສະໝັກ · {COUNTRY_LABEL[job.country]}</p>
+      <p className="text-sm text-muted-foreground">ສະໝັກ · {label(job.country)}</p>
       <h1 className="text-2xl font-bold">{job.title}</h1>
 
       <div className="mt-6">
@@ -108,41 +136,50 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
               <Field label="ວັນເດືອນປີເກີດ">
                 <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
               </Field>
-              <Field label="ແຂວງ">
-                <Input value={province} onChange={(e) => setProvince(e.target.value)} placeholder="ວຽງຈັນ" />
-              </Field>
+
+              <AddressGroup
+                title="ທີ່ຢູ່ຕາມສຳມະໂນຄົວ"
+                village={permVillage}
+                district={permDistrict}
+                province={permProvince}
+                onVillage={setPermVillage}
+                onDistrict={setPermDistrict}
+                onProvince={setPermProvince}
+              />
+              <AddressGroup
+                title="ທີ່ຢູ່ປັດຈຸບັນ"
+                village={curVillage}
+                district={curDistrict}
+                province={curProvince}
+                onVillage={setCurVillage}
+                onDistrict={setCurDistrict}
+                onProvince={setCurProvince}
+              />
 
               {dob && !eligibility.eligible && (
                 <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                   ⛔ ບໍ່ສາມາດສະໝັກໄດ້: {eligibility.reasons.join(", ")}
                 </div>
               )}
+              {error && <p className="text-sm text-red-600">{error}</p>}
             </div>
           )}
 
-          {step === 1 && (
+          {step === 1 && workerId && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                ໝາຍໃສ່ຊ່ອງເອກະສານທີ່ທ່ານມີພ້ອມແລ້ວ — ຖ້າຍັງບໍ່ຄົບ ສາມາດສະໝັກກ່ອນ ແລ້ວນຳມາຍື່ນເພີ່ມພາຍຫຼັງໄດ້
+                ອັບໂຫຼດຮູບຖ່າຍ/ສະແກນເອກະສານ — ຖ້າຍັງບໍ່ຄົບ ສາມາດສະໝັກກ່ອນ ແລ້ວນຳມາຍື່ນເພີ່ມພາຍຫຼັງໄດ້
               </p>
               {requirements.map((r) => (
-                <label
+                <FileUploadField
                   key={r.doc_type}
-                  className="flex items-center justify-between rounded-md border px-3 py-2.5 text-sm"
-                >
-                  <span>
-                    {docLabel(r.doc_type)} {r.required && <span className="text-red-500">*</span>}
-                    {r.note && <span className="ml-1 text-xs text-muted-foreground">({r.note})</span>}
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={!!documents[r.doc_type]}
-                    onChange={(e) =>
-                      setDocuments((d) => ({ ...d, [r.doc_type]: e.target.checked }))
-                    }
-                  />
-                </label>
+                  workerId={workerId}
+                  docType={r.doc_type}
+                  label={docLabel(r.doc_type)}
+                  required={r.required}
+                  note={r.note ?? undefined}
+                  onUploaded={() => setUploadedDocs((d) => ({ ...d, [r.doc_type]: true }))}
+                />
               ))}
               {missingDocs.length > 0 && (
                 <p className="text-xs text-amber-700">
@@ -157,30 +194,35 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
               <Row label="ຊື່" value={name} />
               <Row label="ເບີໂທ" value={phone} />
               <Row label="ວັນເກີດ" value={dob} />
-              <Row label="ແຂວງ" value={province} />
               <Row label="ຕຳແໜ່ງ" value={job.title} />
-              <Row label="ປະເທດ" value={COUNTRY_LABEL[job.country]} />
+              <Row label="ປະເທດ" value={label(job.country)} />
               <Row
                 label="ເອກະສານພ້ອມ"
-                value={`${Object.values(documents).filter(Boolean).length}/${requirements.length}`}
+                value={`${Object.values(uploadedDocs).filter(Boolean).length}/${requirements.length}`}
               />
               {error && <p className="text-red-600">{error}</p>}
             </div>
           )}
 
           <div className="mt-8 flex justify-between">
-            <Button variant="outline" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
+            <Button
+              variant="outline"
+              disabled={step === 0 || isPending}
+              onClick={() => setStep((s) => s - 1)}
+            >
               ກັບຄືນ
             </Button>
-            {step < STEPS.length - 1 ? (
-              <Button
-                onClick={() => setStep((s) => s + 1)}
-                disabled={step === 0 && !canGoStep1}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
+            {step === 0 && (
+              <Button onClick={handleNextFromStep0} disabled={!canGoStep1 || isPending} className="bg-emerald-600 hover:bg-emerald-700">
+                {isPending ? "ກຳລັງດຳເນີນການ..." : "ຕໍ່ໄປ"}
+              </Button>
+            )}
+            {step === 1 && (
+              <Button onClick={() => setStep(2)} className="bg-emerald-600 hover:bg-emerald-700">
                 ຕໍ່ໄປ
               </Button>
-            ) : (
+            )}
+            {step === 2 && (
               <Button onClick={handleSubmit} disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700">
                 {isPending ? "ກຳລັງສົ່ງ..." : "ສົ່ງໃບສະໝັກ"}
               </Button>

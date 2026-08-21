@@ -1,6 +1,3 @@
-import type { Country } from "@/lib/supabase/database.types";
-import { COUNTRY_LABEL } from "@/lib/types";
-
 export const DOC_TYPES: Record<string, string> = {
   id_card: "ບັດປະຈຳຕົວ / ສຳມະໂນຄົວ",
   passport: "ປັດສະປອດ",
@@ -30,19 +27,17 @@ export interface EligibilityResult {
 }
 
 export function checkEligibility(
-  country: Country,
   dob: string,
-  requirements: { min_age: number; max_age: number }[]
+  country: { label: string; min_age: number; max_age: number } | undefined
 ): EligibilityResult {
-  const reasons: string[] = [];
-  if (!dob || requirements.length === 0) {
+  if (!dob || !country) {
     return { eligible: true, reasons: [] };
   }
   const age = calculateAge(dob);
-  const ageReq = requirements[0];
-  if (age < ageReq.min_age || age > ageReq.max_age) {
+  const reasons: string[] = [];
+  if (age < country.min_age || age > country.max_age) {
     reasons.push(
-      `ອາຍຸ ${age} ປີ ບໍ່ຜ່ານເກນ${COUNTRY_LABEL[country]} (${ageReq.min_age}–${ageReq.max_age} ປີ)`
+      `ອາຍຸ ${age} ປີ ບໍ່ຜ່ານເກນ${country.label} (${country.min_age}–${country.max_age} ປີ)`
     );
   }
   return { eligible: reasons.length === 0, reasons };

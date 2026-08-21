@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { JobCard } from "@/components/job-card";
-import { COUNTRY_LABEL, COUNTRY_LIST, type Country } from "@/lib/types";
+import { useCountries } from "@/components/countries-provider";
+import type { Country } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import type { Database } from "@/lib/supabase/database.types";
@@ -12,6 +13,7 @@ type Job = Database["public"]["Tables"]["jobs"]["Row"] & {
 };
 
 export function JobsBrowser({ jobs, initialCountry }: { jobs: Job[]; initialCountry?: Country }) {
+  const { countries, label } = useCountries();
   const [country, setCountry] = useState<Country | "all">(initialCountry ?? "all");
   const [query, setQuery] = useState("");
 
@@ -39,9 +41,9 @@ export function JobsBrowser({ jobs, initialCountry }: { jobs: Job[]; initialCoun
           <FilterChip active={country === "all"} onClick={() => setCountry("all")}>
             ທັງໝົດ
           </FilterChip>
-          {COUNTRY_LIST.map((c) => (
-            <FilterChip key={c} active={country === c} onClick={() => setCountry(c)}>
-              {COUNTRY_LABEL[c]}
+          {countries.map((c) => (
+            <FilterChip key={c.code} active={country === c.code} onClick={() => setCountry(c.code)}>
+              {label(c.code)}
             </FilterChip>
           ))}
         </div>

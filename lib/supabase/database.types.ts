@@ -1,4 +1,4 @@
-export type Country = "domestic" | "thailand" | "korea" | "japan";
+export type Country = string;
 export type AvailabilityStatus = "available" | "in_process" | "placed" | "paused" | "stale";
 export type ApplicationStage =
   | "received"
@@ -75,12 +75,18 @@ export interface Database {
           gender: "male" | "female";
           phone: string;
           dob: string;
-          province: string;
+          perm_village: string;
+          perm_district: string;
+          perm_province: string;
+          cur_village: string;
+          cur_district: string;
+          cur_province: string;
           preferred_countries: Country[];
           availability_status: AvailabilityStatus;
           status_updated_at: string;
           status_updated_by: string;
           last_confirmed_at: string;
+          custom_fields: Record<string, string | number | boolean>;
           created_at: string;
         };
         Insert: {
@@ -89,8 +95,14 @@ export interface Database {
           gender?: "male" | "female";
           phone: string;
           dob: string;
-          province?: string;
+          perm_village?: string;
+          perm_district?: string;
+          perm_province?: string;
+          cur_village?: string;
+          cur_district?: string;
+          cur_province?: string;
           preferred_countries?: Country[];
+          custom_fields?: Record<string, string | number | boolean>;
         };
         Update: Partial<Database["public"]["Tables"]["worker_profiles"]["Insert"]> & {
           availability_status?: AvailabilityStatus;
@@ -120,6 +132,8 @@ export interface Database {
         };
         Update: {
           stage?: ApplicationStage;
+          country?: Country;
+          documents?: Record<string, boolean>;
         };
         Relationships: [
           {
@@ -209,8 +223,6 @@ export interface Database {
           country: Country;
           doc_type: string;
           required: boolean;
-          min_age: number;
-          max_age: number;
           note: string | null;
         };
         Insert: {
@@ -218,11 +230,28 @@ export interface Database {
           country: Country;
           doc_type: string;
           required?: boolean;
-          min_age?: number;
-          max_age?: number;
           note?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["country_requirements"]["Insert"]>;
+        Relationships: [];
+      };
+      countries: {
+        Row: {
+          code: string;
+          label: string;
+          min_age: number;
+          max_age: number;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          code: string;
+          label: string;
+          min_age?: number;
+          max_age?: number;
+          sort_order?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["countries"]["Insert"]>;
         Relationships: [];
       };
       staff: {
@@ -239,6 +268,60 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["staff"]["Insert"]>;
         Relationships: [];
+      };
+      form_fields: {
+        Row: {
+          id: string;
+          field_key: string;
+          label: string;
+          field_type: "text" | "textarea" | "number" | "date" | "select" | "checkbox";
+          options: string[];
+          required: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          field_key: string;
+          label: string;
+          field_type?: "text" | "textarea" | "number" | "date" | "select" | "checkbox";
+          options?: string[];
+          required?: boolean;
+          sort_order?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["form_fields"]["Insert"]>;
+        Relationships: [];
+      };
+      worker_files: {
+        Row: {
+          id: string;
+          worker_id: string;
+          doc_type: string;
+          file_path: string;
+          file_name: string;
+          mime_type: string | null;
+          size_bytes: number | null;
+          uploaded_at: string;
+        };
+        Insert: {
+          id?: string;
+          worker_id: string;
+          doc_type: string;
+          file_path: string;
+          file_name: string;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "worker_files_worker_id_fkey";
+            columns: ["worker_id"];
+            isOneToOne: false;
+            referencedRelation: "worker_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;

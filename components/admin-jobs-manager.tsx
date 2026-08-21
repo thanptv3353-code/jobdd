@@ -22,8 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addJob } from "@/lib/actions";
-import { COUNTRY_LABEL, COUNTRY_LIST, type Country } from "@/lib/types";
+import { useCountries } from "@/components/countries-provider";
+import { addJob, deleteJob, updateJob } from "@/lib/actions";
+import type { Country } from "@/lib/types";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Job = Database["public"]["Tables"]["jobs"]["Row"];
@@ -31,32 +32,15 @@ type Member = Database["public"]["Tables"]["members"]["Row"];
 
 export function AdminJobsManager({ jobs, members }: { jobs: Job[]; members: Member[] }) {
   const router = useRouter();
+  const { label } = useCountries();
   const [isPending, startTransition] = useTransition();
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [memberId, setMemberId] = useState(members[0]?.id ?? "");
-  const [country, setCountry] = useState<Country>("domestic");
-  const [category, setCategory] = useState("");
-  const [salaryRange, setSalaryRange] = useState("");
-  const [quota, setQuota] = useState("10");
-  const [description, setDescription] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
 
-  function handleCreate() {
+  function handleDelete(job: Job) {
+    if (!confirm(`ລຶບຕຳແໜ່ງງານ "${job.title}" ຖາວອນ?`)) return;
     startTransition(async () => {
-      await addJob({
-        memberId,
-        title,
-        country,
-        category,
-        salaryRange,
-        description,
-        quota: Number(quota) || 1,
-      });
-      setTitle("");
-      setCategory("");
-      setSalaryRange("");
-      setDescription("");
-      setOpen(false);
+      await deleteJob(job.id);
       router.refresh();
     });
   }
@@ -65,77 +49,12 @@ export function AdminJobsManager({ jobs, members }: { jobs: Job[]; members: Memb
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">ຕຳແໜ່ງງານ</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button className="bg-emerald-600 hover:bg-emerald-700">+ ເພີ່ມຕຳແໜ່ງງານ</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>ເພີ່ມຕຳແໜ່ງງານໃໝ່</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label>ຊື່ຕຳແໜ່ງ</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>ບໍລິສັດສະມາຊິກ</Label>
-                <Select value={memberId} onValueChange={setMemberId}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>ປະເທດ</Label>
-                <Select value={country} onValueChange={(v) => setCountry(v as Country)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRY_LIST.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {COUNTRY_LABEL[c]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>ໝວດໝູ່</Label>
-                  <Input value={category} onChange={(e) => setCategory(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>ຈຳນວນຮັບ</Label>
-                  <Input type="number" value={quota} onChange={(e) => setQuota(e.target.value)} />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>ຊ່ວງເງິນເດືອນ</Label>
-                <Input value={salaryRange} onChange={(e) => setSalaryRange(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>ລາຍລະອຽດ</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={handleCreate}
-                disabled={!title || !memberId || isPending}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                ບັນທຶກ
-              </Button>
-            </DialogFooter>
+            <JobForm members={members} onDone={() => setCreateOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
@@ -149,6 +68,7 @@ export function AdminJobsManager({ jobs, members }: { jobs: Job[]; members: Memb
               <th className="px-4 py-2.5 font-medium">ປະເທດ</th>
               <th className="px-4 py-2.5 font-medium">ຈຳນວນຮັບ</th>
               <th className="px-4 py-2.5 font-medium">ສະຖານະ</th>
+              <th className="px-4 py-2.5 font-medium"></th>
             </tr>
           </thead>
           <tbody>
@@ -159,7 +79,7 @@ export function AdminJobsManager({ jobs, members }: { jobs: Job[]; members: Memb
                   <td className="px-4 py-2.5 font-medium">{j.title}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{member?.name}</td>
                   <td className="px-4 py-2.5">
-                    <Badge variant="secondary">{COUNTRY_LABEL[j.country]}</Badge>
+                    <Badge variant="secondary">{label(j.country)}</Badge>
                   </td>
                   <td className="px-4 py-2.5">{j.quota}</td>
                   <td className="px-4 py-2.5">
@@ -169,12 +89,159 @@ export function AdminJobsManager({ jobs, members }: { jobs: Job[]; members: Memb
                       <Badge variant="outline">ປິດແລ້ວ</Badge>
                     )}
                   </td>
+                  <td className="px-4 py-2.5">
+                    <div className="flex justify-end gap-1.5">
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingJob(j)}>
+                        ແກ້ໄຂ
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs text-red-600 hover:bg-red-50"
+                        disabled={isPending}
+                        onClick={() => handleDelete(j)}
+                      >
+                        ລຶບ
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      <Dialog open={!!editingJob} onOpenChange={(open) => !open && setEditingJob(null)}>
+        <DialogContent>
+          {editingJob && (
+            <JobForm members={members} job={editingJob} onDone={() => setEditingJob(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function JobForm({ members, job, onDone }: { members: Member[]; job?: Job; onDone: () => void }) {
+  const router = useRouter();
+  const { countries, label } = useCountries();
+  const [isPending, startTransition] = useTransition();
+  const [title, setTitle] = useState(job?.title ?? "");
+  const [memberId, setMemberId] = useState(job?.member_id ?? members[0]?.id ?? "");
+  const [country, setCountry] = useState<Country>(job?.country ?? countries[0]?.code ?? "");
+  const [category, setCategory] = useState(job?.category ?? "");
+  const [salaryRange, setSalaryRange] = useState(job?.salary_range ?? "");
+  const [quota, setQuota] = useState(String(job?.quota ?? 10));
+  const [description, setDescription] = useState(job?.description ?? "");
+  const [status, setStatus] = useState<"open" | "closed">(job?.status ?? "open");
+
+  function handleSave() {
+    startTransition(async () => {
+      const payload = {
+        memberId,
+        title,
+        country,
+        category,
+        salaryRange,
+        description,
+        quota: Number(quota) || 1,
+        status,
+      };
+      if (job) {
+        await updateJob(job.id, payload);
+      } else {
+        await addJob(payload);
+      }
+      router.refresh();
+      onDone();
+    });
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{job ? "ແກ້ໄຂຕຳແໜ່ງງານ" : "ເພີ່ມຕຳແໜ່ງງານໃໝ່"}</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label>ຊື່ຕຳແໜ່ງ</Label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>ບໍລິສັດສະມາຊິກ</Label>
+          <Select value={memberId} onValueChange={setMemberId}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {members.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ປະເທດ</Label>
+            <Select value={country} onValueChange={(v) => setCountry(v as Country)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {label(c.code)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {job && (
+            <div className="space-y-1.5">
+              <Label>ສະຖານະ</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as "open" | "closed")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">ເປີດຮັບ</SelectItem>
+                  <SelectItem value="closed">ປິດແລ້ວ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ໝວດໝູ່</Label>
+            <Input value={category} onChange={(e) => setCategory(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>ຈຳນວນຮັບ</Label>
+            <Input type="number" value={quota} onChange={(e) => setQuota(e.target.value)} />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>ຊ່ວງເງິນເດືອນ</Label>
+          <Input value={salaryRange} onChange={(e) => setSalaryRange(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>ລາຍລະອຽດ</Label>
+          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          onClick={handleSave}
+          disabled={!title || !memberId || isPending}
+          className="bg-emerald-600 hover:bg-emerald-700"
+        >
+          ບັນທຶກ
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

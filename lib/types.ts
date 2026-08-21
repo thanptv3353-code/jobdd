@@ -1,14 +1,5 @@
 export type { Country, AvailabilityStatus, ApplicationStage } from "@/lib/supabase/database.types";
-import type { ApplicationStage, AvailabilityStatus, Country } from "@/lib/supabase/database.types";
-
-export const COUNTRY_LABEL: Record<Country, string> = {
-  domestic: "ພາຍໃນ",
-  thailand: "ໄທ",
-  korea: "ເກົາຫຼີ (EPS)",
-  japan: "ຢີ່ປຸ່ນ",
-};
-
-export const COUNTRY_LIST: Country[] = ["domestic", "thailand", "korea", "japan"];
+import type { ApplicationStage, AvailabilityStatus } from "@/lib/supabase/database.types";
 
 export const AVAILABILITY_LABEL: Record<AvailabilityStatus, string> = {
   available: "ວ່າງ",

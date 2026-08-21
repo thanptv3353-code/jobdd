@@ -53,3 +53,23 @@ export async function getHomeStats() {
   if (error) throw error;
   return data ?? { available_workers: 0, open_jobs: 0, members: 0 };
 }
+
+export async function getCountries() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("countries")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getFormFields() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("form_fields")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}

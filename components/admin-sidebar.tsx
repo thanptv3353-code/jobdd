@@ -11,6 +11,8 @@ const NAV = [
   { href: "/admin/applications", label: "ໃບສະໝັກ", icon: "📄" },
   { href: "/admin/jobs", label: "ຕຳແໜ່ງງານ", icon: "💼" },
   { href: "/admin/members", label: "ບໍລິສັດສະມາຊິກ", icon: "🏢" },
+  { href: "/admin/countries", label: "ປະເທດປາຍທາງ", icon: "🌏" },
+  { href: "/admin/form-builder", label: "ຟອມລົງທະບຽນ", icon: "🧩" },
 ];
 
 export function AdminSidebar({ userEmail }: { userEmail: string }) {

@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/status-badge";
+import { useCountries } from "@/components/countries-provider";
 import { getMyStatus, setMyStatus } from "@/lib/actions";
-import { COUNTRY_LABEL, STAGE_LABEL, type AvailabilityStatus } from "@/lib/types";
+import { STAGE_LABEL, type AvailabilityStatus } from "@/lib/types";
 
 interface MyApplication {
   id: string;
@@ -30,6 +31,7 @@ interface MyStatus {
 }
 
 export default function DashboardPage() {
+  const { label } = useCountries();
   const [isPending, startTransition] = useTransition();
   const [phone, setPhone] = useState("");
   const [data, setData] = useState<MyStatus | null>(null);
@@ -121,7 +123,7 @@ export default function DashboardPage() {
                   <div>
                     <p className="font-semibold">{a.job_title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {COUNTRY_LABEL[a.country as keyof typeof COUNTRY_LABEL]} · ສົ່ງເມື່ອ {a.submitted_at}
+                      {label(a.country)} · ສົ່ງເມື່ອ {a.submitted_at}
                     </p>
                   </div>
                   <Badge

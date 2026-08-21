@@ -1,10 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getMembers } from "@/lib/queries";
-import { COUNTRY_LABEL } from "@/lib/types";
+import { getCountries, getMembers } from "@/lib/queries";
 
 export default async function MembersPage() {
-  const members = await getMembers();
+  const [members, countries] = await Promise.all([getMembers(), getCountries()]);
+  const countryLabel = (code: string) => countries.find((c) => c.code === code)?.label ?? code;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -29,7 +29,7 @@ export default async function MembersPage() {
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {m.country_focus.map((c) => (
                   <Badge key={c} variant="secondary">
-                    {COUNTRY_LABEL[c]}
+                    {countryLabel(c)}
                   </Badge>
                 ))}
               </div>

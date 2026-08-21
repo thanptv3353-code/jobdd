@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { CountriesProvider } from "@/components/countries-provider";
 import { createClient } from "@/lib/supabase/server";
+import { getCountries } from "@/lib/queries";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -30,10 +32,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
+  const countries = await getCountries();
+
   return (
-    <div className="flex min-h-screen flex-1">
-      <AdminSidebar userEmail={user.email ?? ""} />
-      <main className="flex-1 overflow-x-hidden bg-zinc-50 p-6">{children}</main>
-    </div>
+    <CountriesProvider countries={countries}>
+      <div className="flex min-h-screen flex-1">
+        <AdminSidebar userEmail={user.email ?? ""} />
+        <main className="flex-1 overflow-x-hidden bg-zinc-50 p-6">{children}</main>
+      </div>
+    </CountriesProvider>
   );
 }

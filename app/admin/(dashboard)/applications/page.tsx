@@ -5,7 +5,7 @@ export default async function AdminApplicationsPage() {
   const supabase = await createClient();
   const { data: applications } = await supabase
     .from("applications")
-    .select("id, stage, country, worker_id, worker_profiles(name), jobs(title)")
+    .select("id, stage, country, worker_id, documents, worker_profiles(name), jobs(title)")
     .order("submitted_at", { ascending: false });
 
   return <AdminApplicationsBoard applications={applications ?? []} />;

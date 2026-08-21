@@ -4,21 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CountryDocChecklist } from "@/components/country-doc-checklist";
-import { getCountryRequirements, getJob } from "@/lib/queries";
-import { COUNTRY_LABEL } from "@/lib/types";
+import { getCountries, getCountryRequirements, getJob } from "@/lib/queries";
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const job = await getJob(id);
   if (!job) notFound();
 
-  const requirements = await getCountryRequirements(job.country);
+  const [requirements, countries] = await Promise.all([
+    getCountryRequirements(job.country),
+    getCountries(),
+  ]);
+  const countryLabel = countries.find((c) => c.code === job.country)?.label ?? job.country;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Badge variant="secondary">{COUNTRY_LABEL[job.country]}</Badge>
+          <Badge variant="secondary">{countryLabel}</Badge>
           <h1 className="mt-2 text-3xl font-bold">{job.title}</h1>
           <p className="mt-1 text-muted-foreground">{job.members?.name}</p>
         </div>

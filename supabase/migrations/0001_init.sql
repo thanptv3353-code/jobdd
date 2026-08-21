@@ -317,7 +317,8 @@ grant select on members, jobs, country_requirements, worker_profiles, applicatio
 grant insert on worker_profiles, applications to anon;
 grant insert on members, jobs, worker_profiles, applications, placements, contact_logs to authenticated;
 
-grant update on members, jobs, worker_profiles, applications to authenticated;
+grant update on members, jobs, worker_profiles, applications, placements, contact_logs, country_requirements to authenticated;
+grant delete on members, jobs, worker_profiles, applications, placements, contact_logs, country_requirements to authenticated;
 
 -- ============================================================
 -- Row Level Security
@@ -330,6 +331,8 @@ drop policy if exists "staff write members" on members;
 create policy "staff write members" on members for insert with check (is_staff());
 drop policy if exists "staff update members" on members;
 create policy "staff update members" on members for update using (is_staff());
+drop policy if exists "staff delete members" on members;
+create policy "staff delete members" on members for delete using (is_staff());
 
 alter table jobs enable row level security;
 drop policy if exists "public read jobs" on jobs;
@@ -338,6 +341,8 @@ drop policy if exists "staff write jobs" on jobs;
 create policy "staff write jobs" on jobs for insert with check (is_staff());
 drop policy if exists "staff update jobs" on jobs;
 create policy "staff update jobs" on jobs for update using (is_staff());
+drop policy if exists "staff delete jobs" on jobs;
+create policy "staff delete jobs" on jobs for delete using (is_staff());
 
 alter table country_requirements enable row level security;
 drop policy if exists "public read country_requirements" on country_requirements;
@@ -352,6 +357,8 @@ drop policy if exists "staff select worker_profiles" on worker_profiles;
 create policy "staff select worker_profiles" on worker_profiles for select using (is_staff());
 drop policy if exists "staff update worker_profiles" on worker_profiles;
 create policy "staff update worker_profiles" on worker_profiles for update using (is_staff());
+drop policy if exists "staff delete worker_profiles" on worker_profiles;
+create policy "staff delete worker_profiles" on worker_profiles for delete using (is_staff());
 
 alter table applications enable row level security;
 drop policy if exists "anon insert applications" on applications;
@@ -360,6 +367,8 @@ drop policy if exists "staff select applications" on applications;
 create policy "staff select applications" on applications for select using (is_staff());
 drop policy if exists "staff update applications" on applications;
 create policy "staff update applications" on applications for update using (is_staff());
+drop policy if exists "staff delete applications" on applications;
+create policy "staff delete applications" on applications for delete using (is_staff());
 
 alter table placements enable row level security;
 drop policy if exists "staff all placements" on placements;

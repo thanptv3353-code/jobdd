@@ -1,7 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { COUNTRY_LABEL } from "@/lib/types";
+import { useCountries } from "@/components/countries-provider";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Job = Database["public"]["Tables"]["jobs"]["Row"] & {
@@ -9,12 +11,14 @@ type Job = Database["public"]["Tables"]["jobs"]["Row"] & {
 };
 
 export function JobCard({ job }: { job: Job }) {
+  const { label } = useCountries();
+
   return (
     <Link href={`/jobs/${job.id}`}>
       <Card className="h-full transition-shadow hover:shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
-            <Badge variant="secondary">{COUNTRY_LABEL[job.country]}</Badge>
+            <Badge variant="secondary">{label(job.country)}</Badge>
             <span className="text-xs text-muted-foreground">{job.posted_at}</span>
           </div>
         </CardHeader>

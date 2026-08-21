@@ -6,25 +6,37 @@ export default async function AdminWorkerDetailPage({ params }: { params: Promis
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: worker }, { data: applications }, { data: placements }, { data: contactLogs }] =
-    await Promise.all([
-      supabase.from("worker_profiles").select("*").eq("id", id).maybeSingle(),
-      supabase
-        .from("applications")
-        .select("*, jobs(title)")
-        .eq("worker_id", id)
-        .order("submitted_at", { ascending: false }),
-      supabase
-        .from("placements")
-        .select("*")
-        .eq("worker_id", id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("contact_logs")
-        .select("*")
-        .eq("worker_id", id)
-        .order("contacted_at", { ascending: false }),
-    ]);
+  const [
+    { data: worker },
+    { data: applications },
+    { data: placements },
+    { data: contactLogs },
+    { data: files },
+    { data: formFields },
+  ] = await Promise.all([
+    supabase.from("worker_profiles").select("*").eq("id", id).maybeSingle(),
+    supabase
+      .from("applications")
+      .select("*, jobs(title)")
+      .eq("worker_id", id)
+      .order("submitted_at", { ascending: false }),
+    supabase
+      .from("placements")
+      .select("*")
+      .eq("worker_id", id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("contact_logs")
+      .select("*")
+      .eq("worker_id", id)
+      .order("contacted_at", { ascending: false }),
+    supabase
+      .from("worker_files")
+      .select("*")
+      .eq("worker_id", id)
+      .order("uploaded_at", { ascending: false }),
+    supabase.from("form_fields").select("field_key, label"),
+  ]);
 
   if (!worker) notFound();
 
@@ -34,6 +46,8 @@ export default async function AdminWorkerDetailPage({ params }: { params: Promis
       applications={applications ?? []}
       placements={placements ?? []}
       contactLogs={contactLogs ?? []}
+      files={files ?? []}
+      formFields={formFields ?? []}
     />
   );
 }

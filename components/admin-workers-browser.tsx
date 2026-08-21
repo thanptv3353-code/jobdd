@@ -4,8 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { StatusDot } from "@/components/status-badge";
+import { useCountries } from "@/components/countries-provider";
 import { calculateAge } from "@/lib/eligibility";
-import { AVAILABILITY_LABEL, COUNTRY_LABEL, type AvailabilityStatus, type Country } from "@/lib/types";
+import { AVAILABILITY_LABEL, type AvailabilityStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -21,6 +22,7 @@ const FILTERS: (AvailabilityStatus | "all")[] = [
 ];
 
 export function AdminWorkersBrowser({ workers }: { workers: Worker[] }) {
+  const { label } = useCountries();
   const [filter, setFilter] = useState<AvailabilityStatus | "all">("available");
   const [query, setQuery] = useState("");
 
@@ -71,7 +73,7 @@ export function AdminWorkersBrowser({ workers }: { workers: Worker[] }) {
               <th className="px-4 py-2.5 font-medium"></th>
               <th className="px-4 py-2.5 font-medium">ຊື່</th>
               <th className="px-4 py-2.5 font-medium">ອາຍຸ</th>
-              <th className="px-4 py-2.5 font-medium">ແຂວງ</th>
+              <th className="px-4 py-2.5 font-medium">ແຂວງປັດຈຸບັນ</th>
               <th className="px-4 py-2.5 font-medium">ສົນໃຈ</th>
               <th className="px-4 py-2.5 font-medium">ອັບເດດລ່າສຸດ</th>
             </tr>
@@ -89,9 +91,9 @@ export function AdminWorkersBrowser({ workers }: { workers: Worker[] }) {
                   <p className="text-xs text-muted-foreground">{w.phone}</p>
                 </td>
                 <td className="px-4 py-2.5">{calculateAge(w.dob)}</td>
-                <td className="px-4 py-2.5">{w.province}</td>
+                <td className="px-4 py-2.5">{w.cur_province}</td>
                 <td className="px-4 py-2.5">
-                  {w.preferred_countries.map((c) => COUNTRY_LABEL[c as Country]).join(", ")}
+                  {w.preferred_countries.map((c) => label(c)).join(", ")}
                 </td>
                 <td className="px-4 py-2.5 text-muted-foreground">{w.status_updated_at?.slice(0, 10)}</td>
               </tr>

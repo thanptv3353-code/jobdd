@@ -1,19 +1,22 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ApplicationEditDialog } from "@/components/application-edit-dialog";
+import { useCountries } from "@/components/countries-provider";
 import { updateApplicationStage } from "@/lib/actions";
-import { COUNTRY_LABEL, STAGE_LABEL, STAGE_ORDER, type ApplicationStage, type Country } from "@/lib/types";
+import { STAGE_LABEL, STAGE_ORDER, type ApplicationStage, type Country } from "@/lib/types";
 
 interface AppRow {
   id: string;
   stage: ApplicationStage;
   country: Country;
   worker_id: string;
+  documents: Record<string, boolean>;
   worker_profiles: { name: string } | null;
   jobs: { title: string } | null;
 }
@@ -28,7 +31,10 @@ function nextStage(stage: ApplicationStage): ApplicationStage | null {
 
 export function AdminApplicationsBoard({ applications }: { applications: AppRow[] }) {
   const router = useRouter();
+  const { label } = useCountries();
   const [isPending, startTransition] = useTransition();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingApplication = applications.find((a) => a.id === editingId) ?? null;
 
   function move(id: string, stage: ApplicationStage) {
     startTransition(async () => {
@@ -64,7 +70,7 @@ export function AdminApplicationsBoard({ applications }: { applications: AppRow[
                         </Link>
                         <p className="text-xs text-muted-foreground">{a.jobs?.title}</p>
                         <Badge variant="secondary" className="text-xs">
-                          {COUNTRY_LABEL[a.country]}
+                          {label(a.country)}
                         </Badge>
                         <div className="flex gap-1.5 pt-1">
                           {next && (
@@ -85,6 +91,15 @@ export function AdminApplicationsBoard({ applications }: { applications: AppRow[
                             onClick={() => move(a.id, "rejected")}
                           >
                             ປະຕິເສດ
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isPending}
+                            className="h-7 text-xs"
+                            onClick={() => setEditingId(a.id)}
+                          >
+                            ແກ້ໄຂ
                           </Button>
                         </div>
                       </CardContent>
@@ -114,6 +129,12 @@ export function AdminApplicationsBoard({ applications }: { applications: AppRow[
             ))}
         </div>
       </div>
+
+      <ApplicationEditDialog
+        application={editingApplication}
+        open={!!editingApplication}
+        onOpenChange={(open) => !open && setEditingId(null)}
+      />
     </div>
   );
 }

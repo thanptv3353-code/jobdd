@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type {
@@ -9,30 +10,71 @@ import type {
 } from "@/lib/supabase/database.types";
 
 // ---------- Public / worker actions (no auth — RLS grants anon insert) ----------
+//
+// These insert without .select(): anon only has INSERT (not SELECT) on
+// worker_profiles/applications by design (worker data is private, readable
+// only via the phone-scoped get_my_status RPC or by staff). Postgres'
+// INSERT ... RETURNING needs SELECT privilege too, so the id is generated
+// here instead of read back from the database.
 
-export async function registerWorker(input: {
-  name: string;
-  gender: "male" | "female";
-  phone: string;
-  dob: string;
-  province: string;
-  preferredCountries: Country[];
+export interface AddressInput {
+  permVillage: string;
+  permDistrict: string;
+  permProvince: string;
+  curVillage: string;
+  curDistrict: string;
+  curProvince: string;
+}
+
+export async function registerWorker(
+  input: {
+    name: string;
+    gender: "male" | "female";
+    phone: string;
+    dob: string;
+    preferredCountries: Country[];
+    customFields?: Record<string, string | number | boolean>;
+  } & AddressInput
+) {
+  const supabase = await createClient();
+  const id = randomUUID();
+  const { error } = await supabase.from("worker_profiles").insert({
+    id,
+    name: input.name,
+    gender: input.gender,
+    phone: input.phone,
+    dob: input.dob,
+    perm_village: input.permVillage,
+    perm_district: input.permDistrict,
+    perm_province: input.permProvince,
+    cur_village: input.curVillage,
+    cur_district: input.curDistrict,
+    cur_province: input.curProvince,
+    preferred_countries: input.preferredCountries,
+    custom_fields: input.customFields ?? {},
+  });
+  if (error) throw error;
+  return { id };
+}
+
+export async function recordWorkerFile(input: {
+  workerId: string;
+  docType: string;
+  filePath: string;
+  fileName: string;
+  mimeType?: string;
+  sizeBytes?: number;
 }) {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("worker_profiles")
-    .insert({
-      name: input.name,
-      gender: input.gender,
-      phone: input.phone,
-      dob: input.dob,
-      province: input.province,
-      preferred_countries: input.preferredCountries,
-    })
-    .select()
-    .single();
+  const { error } = await supabase.from("worker_files").insert({
+    worker_id: input.workerId,
+    doc_type: input.docType,
+    file_path: input.filePath,
+    file_name: input.fileName,
+    mime_type: input.mimeType,
+    size_bytes: input.sizeBytes,
+  });
   if (error) throw error;
-  return data;
 }
 
 export async function submitApplication(input: {
@@ -42,18 +84,16 @@ export async function submitApplication(input: {
   documents: Record<string, boolean>;
 }) {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("applications")
-    .insert({
-      worker_id: input.workerId,
-      job_id: input.jobId,
-      country: input.country,
-      documents: input.documents,
-    })
-    .select()
-    .single();
+  const id = randomUUID();
+  const { error } = await supabase.from("applications").insert({
+    id,
+    worker_id: input.workerId,
+    job_id: input.jobId,
+    country: input.country,
+    documents: input.documents,
+  });
   if (error) throw error;
-  return data;
+  return { id };
 }
 
 export async function getMyStatus(phone: string) {
@@ -99,6 +139,138 @@ export async function setWorkerStatus(workerId: string, status: AvailabilityStat
   revalidatePath("/admin/workers");
 }
 
+export async function updateWorkerProfile(
+  workerId: string,
+  input: {
+    name: string;
+    gender: "male" | "female";
+    phone: string;
+    dob: string;
+    preferredCountries: Country[];
+  } & AddressInput
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("worker_profiles")
+    .update({
+      name: input.name,
+      gender: input.gender,
+      phone: input.phone,
+      dob: input.dob,
+      perm_village: input.permVillage,
+      perm_district: input.permDistrict,
+      perm_province: input.permProvince,
+      cur_village: input.curVillage,
+      cur_district: input.curDistrict,
+      cur_province: input.curProvince,
+      preferred_countries: input.preferredCountries,
+    })
+    .eq("id", workerId);
+  if (error) throw error;
+  revalidatePath(`/admin/workers/${workerId}`);
+  revalidatePath("/admin/workers");
+}
+
+export async function deleteWorker(workerId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("worker_profiles").delete().eq("id", workerId);
+  if (error) throw error;
+  revalidatePath("/admin/workers");
+}
+
+export async function getWorkerFileUrl(filePath: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from("worker-uploads")
+    .createSignedUrl(filePath, 60 * 10);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function deleteWorkerFile(fileId: string, filePath: string, workerId: string) {
+  const supabase = await createClient();
+  const { error: storageError } = await supabase.storage.from("worker-uploads").remove([filePath]);
+  if (storageError) throw storageError;
+  const { error } = await supabase.from("worker_files").delete().eq("id", fileId);
+  if (error) throw error;
+  revalidatePath(`/admin/workers/${workerId}`);
+}
+
+// ---------- Form builder (staff) ----------
+
+type FormFieldInput = {
+  fieldKey: string;
+  label: string;
+  fieldType: "text" | "textarea" | "number" | "date" | "select" | "checkbox";
+  options: string[];
+  required: boolean;
+  sortOrder: number;
+};
+
+export async function addFormField(input: FormFieldInput) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("form_fields").insert({
+    field_key: input.fieldKey,
+    label: input.label,
+    field_type: input.fieldType,
+    options: input.options,
+    required: input.required,
+    sort_order: input.sortOrder,
+  });
+  if (error) throw error;
+  revalidatePath("/admin/form-builder");
+  revalidatePath("/register");
+}
+
+export async function updateFormField(id: string, input: FormFieldInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("form_fields")
+    .update({
+      field_key: input.fieldKey,
+      label: input.label,
+      field_type: input.fieldType,
+      options: input.options,
+      required: input.required,
+      sort_order: input.sortOrder,
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/form-builder");
+  revalidatePath("/register");
+}
+
+export async function deleteFormField(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("form_fields").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/form-builder");
+  revalidatePath("/register");
+}
+
+export async function updateApplication(
+  applicationId: string,
+  input: { stage: ApplicationStage; documents: Record<string, boolean> }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("applications")
+    .update({ stage: input.stage, documents: input.documents })
+    .eq("id", applicationId);
+  if (error) throw error;
+  revalidatePath("/admin/applications");
+  revalidatePath("/admin/workers");
+  revalidatePath("/admin");
+}
+
+export async function deleteApplication(applicationId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("applications").delete().eq("id", applicationId);
+  if (error) throw error;
+  revalidatePath("/admin/applications");
+  revalidatePath("/admin/workers");
+}
+
 export async function addContactLog(input: {
   workerId: string;
   staffName: string;
@@ -118,7 +290,28 @@ export async function addContactLog(input: {
   revalidatePath(`/admin/workers/${input.workerId}`);
 }
 
-export async function addJob(input: {
+export async function updateContactLog(
+  id: string,
+  workerId: string,
+  input: { result: string; note?: string; channel: "phone" | "whatsapp" | "sms" | "in_person" }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("contact_logs")
+    .update({ result: input.result, note: input.note ?? null, channel: input.channel })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath(`/admin/workers/${workerId}`);
+}
+
+export async function deleteContactLog(id: string, workerId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("contact_logs").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath(`/admin/workers/${workerId}`);
+}
+
+type JobInput = {
   memberId: string;
   title: string;
   country: Country;
@@ -126,7 +319,10 @@ export async function addJob(input: {
   salaryRange: string;
   description: string;
   quota: number;
-}) {
+  status?: "open" | "closed";
+};
+
+export async function addJob(input: JobInput) {
   const supabase = await createClient();
   const { error } = await supabase.from("jobs").insert({
     member_id: input.memberId,
@@ -142,12 +338,43 @@ export async function addJob(input: {
   revalidatePath("/jobs");
 }
 
-export async function addMember(input: {
+export async function updateJob(jobId: string, input: JobInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("jobs")
+    .update({
+      member_id: input.memberId,
+      title: input.title,
+      country: input.country,
+      category: input.category,
+      salary_range: input.salaryRange,
+      description: input.description,
+      quota: input.quota,
+      status: input.status,
+    })
+    .eq("id", jobId);
+  if (error) throw error;
+  revalidatePath("/admin/jobs");
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${jobId}`);
+}
+
+export async function deleteJob(jobId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("jobs").delete().eq("id", jobId);
+  if (error) throw error;
+  revalidatePath("/admin/jobs");
+  revalidatePath("/jobs");
+}
+
+type MemberInput = {
   name: string;
   description: string;
   establishedYear: number;
   countryFocus: Country[];
-}) {
+};
+
+export async function addMember(input: MemberInput) {
   const supabase = await createClient();
   const { error } = await supabase.from("members").insert({
     name: input.name,
@@ -158,6 +385,121 @@ export async function addMember(input: {
   if (error) throw error;
   revalidatePath("/admin/members");
   revalidatePath("/members");
+}
+
+export async function updateMember(memberId: string, input: MemberInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("members")
+    .update({
+      name: input.name,
+      description: input.description,
+      established_year: input.establishedYear,
+      country_focus: input.countryFocus,
+    })
+    .eq("id", memberId);
+  if (error) throw error;
+  revalidatePath("/admin/members");
+  revalidatePath("/members");
+}
+
+export async function deleteMember(memberId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("members").delete().eq("id", memberId);
+  if (error) throw error;
+  revalidatePath("/admin/members");
+  revalidatePath("/members");
+}
+
+// ---------- Countries + per-country document requirements (staff) ----------
+
+type CountryInput = {
+  code: string;
+  label: string;
+  minAge: number;
+  maxAge: number;
+  sortOrder: number;
+};
+
+export async function addCountry(input: CountryInput) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("countries").insert({
+    code: input.code,
+    label: input.label,
+    min_age: input.minAge,
+    max_age: input.maxAge,
+    sort_order: input.sortOrder,
+  });
+  if (error) throw error;
+  revalidatePath("/admin/countries");
+  revalidatePath("/jobs");
+  revalidatePath("/register");
+}
+
+export async function updateCountry(code: string, input: CountryInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("countries")
+    .update({
+      label: input.label,
+      min_age: input.minAge,
+      max_age: input.maxAge,
+      sort_order: input.sortOrder,
+    })
+    .eq("code", code);
+  if (error) throw error;
+  revalidatePath("/admin/countries");
+  revalidatePath("/jobs");
+  revalidatePath("/register");
+}
+
+export async function deleteCountry(code: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("countries").delete().eq("code", code);
+  if (error) throw error;
+  revalidatePath("/admin/countries");
+  revalidatePath("/jobs");
+  revalidatePath("/register");
+}
+
+type CountryRequirementInput = {
+  country: string;
+  docType: string;
+  required: boolean;
+  note?: string;
+};
+
+export async function addCountryRequirement(input: CountryRequirementInput) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("country_requirements").insert({
+    country: input.country,
+    doc_type: input.docType,
+    required: input.required,
+    note: input.note ?? null,
+  });
+  if (error) throw error;
+  revalidatePath("/admin/countries");
+}
+
+export async function updateCountryRequirement(id: string, input: CountryRequirementInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("country_requirements")
+    .update({
+      doc_type: input.docType,
+      required: input.required,
+      note: input.note ?? null,
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/countries");
+}
+
+export async function deleteCountryRequirement(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("country_requirements").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/countries");
 }
 
 // ---------- Auth ----------
