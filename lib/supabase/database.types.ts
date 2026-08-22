@@ -86,7 +86,7 @@ export interface Database {
           status_updated_at: string;
           status_updated_by: string;
           last_confirmed_at: string;
-          custom_fields: Record<string, string | number | boolean>;
+          custom_fields: Record<string, string | number | boolean | string[]>;
           created_at: string;
         };
         Insert: {
@@ -102,7 +102,7 @@ export interface Database {
           cur_district?: string;
           cur_province?: string;
           preferred_countries?: Country[];
-          custom_fields?: Record<string, string | number | boolean>;
+          custom_fields?: Record<string, string | number | boolean | string[]>;
         };
         Update: Partial<Database["public"]["Tables"]["worker_profiles"]["Insert"]> & {
           availability_status?: AvailabilityStatus;
@@ -274,20 +274,22 @@ export interface Database {
           id: string;
           field_key: string;
           label: string;
-          field_type: "text" | "textarea" | "number" | "date" | "select" | "checkbox";
+          field_type: "text" | "textarea" | "number" | "date" | "select" | "multiselect" | "checkbox";
           options: string[];
           required: boolean;
           sort_order: number;
+          is_builtin: boolean;
           created_at: string;
         };
         Insert: {
           id?: string;
           field_key: string;
           label: string;
-          field_type?: "text" | "textarea" | "number" | "date" | "select" | "checkbox";
+          field_type?: "text" | "textarea" | "number" | "date" | "select" | "multiselect" | "checkbox";
           options?: string[];
           required?: boolean;
           sort_order?: number;
+          is_builtin?: boolean;
         };
         Update: Partial<Database["public"]["Tables"]["form_fields"]["Insert"]>;
         Relationships: [];
@@ -301,6 +303,7 @@ export interface Database {
           file_name: string;
           mime_type: string | null;
           size_bytes: number | null;
+          description: string | null;
           uploaded_at: string;
         };
         Insert: {
@@ -311,6 +314,7 @@ export interface Database {
           file_name: string;
           mime_type?: string | null;
           size_bytes?: number | null;
+          description?: string | null;
         };
         Update: never;
         Relationships: [
@@ -322,6 +326,32 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      site_settings: {
+        Row: {
+          id: boolean;
+          org_name_lo: string;
+          org_name_en: string;
+          org_abbreviation: string;
+          phone: string;
+          hotline: string;
+          facebook_url: string | null;
+          tiktok_url: string | null;
+          youtube_url: string | null;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: {
+          org_name_lo?: string;
+          org_name_en?: string;
+          org_abbreviation?: string;
+          phone?: string;
+          hotline?: string;
+          facebook_url?: string | null;
+          tiktok_url?: string | null;
+          youtube_url?: string | null;
+        };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

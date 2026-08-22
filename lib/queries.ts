@@ -64,6 +64,13 @@ export async function getCountries() {
   return data ?? [];
 }
 
+export async function getSiteSettings() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("site_settings").select("*").maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function getFormFields() {
   const supabase = await createClient();
   const { data, error } = await supabase

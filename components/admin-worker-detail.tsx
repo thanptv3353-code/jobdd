@@ -231,7 +231,7 @@ export function AdminWorkerDetail({
         </Card>
       )}
 
-      <Card className="mt-4">
+      <Card id="files" className="mt-4 scroll-mt-6">
         <CardContent className="pt-6">
           <h2 className="font-semibold">ໄຟລ໌/ຮູບທີ່ອັບໂຫຼດ</h2>
           <div className="mt-3 space-y-2">

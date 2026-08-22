@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ const NAV = [
   { href: "/admin/members", label: "ບໍລິສັດສະມາຊິກ", icon: "🏢" },
   { href: "/admin/countries", label: "ປະເທດປາຍທາງ", icon: "🌏" },
   { href: "/admin/form-builder", label: "ຟອມລົງທະບຽນ", icon: "🧩" },
+  { href: "/admin/settings", label: "ຂໍ້ມູນສະມາຄົມ", icon: "⚙️" },
 ];
 
 export function AdminSidebar({ userEmail }: { userEmail: string }) {
@@ -22,9 +24,7 @@ export function AdminSidebar({ userEmail }: { userEmail: string }) {
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r bg-muted/20 p-4">
       <Link href="/" className="mb-6 flex items-center gap-2 px-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600 text-xs font-bold text-white">
-          DD
-        </span>
+        <Image src="/leba-logo.jpg" alt="LEBA" width={28} height={28} className="rounded-full" />
         <span className="font-bold">Job DD Admin</span>
       </Link>
       <nav className="space-y-1">

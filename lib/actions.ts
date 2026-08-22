@@ -28,31 +28,37 @@ export interface AddressInput {
 
 export async function registerWorker(
   input: {
+    id?: string;
     name: string;
     gender: "male" | "female";
     phone: string;
     dob: string;
     preferredCountries: Country[];
-    customFields?: Record<string, string | number | boolean>;
+    customFields?: Record<string, string | number | boolean | string[]>;
   } & AddressInput
 ) {
   const supabase = await createClient();
-  const id = randomUUID();
-  const { error } = await supabase.from("worker_profiles").insert({
-    id,
-    name: input.name,
-    gender: input.gender,
-    phone: input.phone,
-    dob: input.dob,
-    perm_village: input.permVillage,
-    perm_district: input.permDistrict,
-    perm_province: input.permProvince,
-    cur_village: input.curVillage,
-    cur_district: input.curDistrict,
-    cur_province: input.curProvince,
-    preferred_countries: input.preferredCountries,
-    custom_fields: input.customFields ?? {},
-  });
+  const id = input.id ?? randomUUID();
+  const { error } = await supabase
+    .from("worker_profiles")
+    .upsert(
+      {
+        id,
+        name: input.name,
+        gender: input.gender,
+        phone: input.phone,
+        dob: input.dob,
+        perm_village: input.permVillage,
+        perm_district: input.permDistrict,
+        perm_province: input.permProvince,
+        cur_village: input.curVillage,
+        cur_district: input.curDistrict,
+        cur_province: input.curProvince,
+        preferred_countries: input.preferredCountries,
+        custom_fields: input.customFields ?? {},
+      },
+      { onConflict: "id", ignoreDuplicates: true }
+    );
   if (error) throw error;
   return { id };
 }
@@ -64,6 +70,7 @@ export async function recordWorkerFile(input: {
   fileName: string;
   mimeType?: string;
   sizeBytes?: number;
+  description?: string;
 }) {
   const supabase = await createClient();
   const { error } = await supabase.from("worker_files").insert({
@@ -73,6 +80,7 @@ export async function recordWorkerFile(input: {
     file_name: input.fileName,
     mime_type: input.mimeType,
     size_bytes: input.sizeBytes,
+    description: input.description ?? null,
   });
   if (error) throw error;
 }
@@ -201,7 +209,7 @@ export async function deleteWorkerFile(fileId: string, filePath: string, workerI
 type FormFieldInput = {
   fieldKey: string;
   label: string;
-  fieldType: "text" | "textarea" | "number" | "date" | "select" | "checkbox";
+  fieldType: "text" | "textarea" | "number" | "date" | "select" | "multiselect" | "checkbox";
   options: string[];
   required: boolean;
   sortOrder: number;
@@ -240,9 +248,28 @@ export async function updateFormField(id: string, input: FormFieldInput) {
   revalidatePath("/register");
 }
 
+export async function updateBuiltinFormField(
+  id: string,
+  input: { label: string; required: boolean; sortOrder: number }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("form_fields")
+    .update({ label: input.label, required: input.required, sort_order: input.sortOrder })
+    .eq("id", id)
+    .eq("is_builtin", true);
+  if (error) throw error;
+  revalidatePath("/admin/form-builder");
+  revalidatePath("/register");
+}
+
 export async function deleteFormField(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from("form_fields").delete().eq("id", id);
+  const { error } = await supabase
+    .from("form_fields")
+    .delete()
+    .eq("id", id)
+    .eq("is_builtin", false);
   if (error) throw error;
   revalidatePath("/admin/form-builder");
   revalidatePath("/register");
@@ -500,6 +527,37 @@ export async function deleteCountryRequirement(id: string) {
   const { error } = await supabase.from("country_requirements").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/admin/countries");
+}
+
+// ---------- Site settings (staff) ----------
+
+export async function updateSiteSettings(input: {
+  orgNameLo: string;
+  orgNameEn: string;
+  orgAbbreviation: string;
+  phone: string;
+  hotline: string;
+  facebookUrl?: string;
+  tiktokUrl?: string;
+  youtubeUrl?: string;
+}) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("site_settings")
+    .update({
+      org_name_lo: input.orgNameLo,
+      org_name_en: input.orgNameEn,
+      org_abbreviation: input.orgAbbreviation,
+      phone: input.phone,
+      hotline: input.hotline,
+      facebook_url: input.facebookUrl || null,
+      tiktok_url: input.tiktokUrl || null,
+      youtube_url: input.youtubeUrl || null,
+    })
+    .eq("id", true);
+  if (error) throw error;
+  revalidatePath("/admin/settings");
+  revalidatePath("/", "layout");
 }
 
 // ---------- Auth ----------

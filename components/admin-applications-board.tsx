@@ -29,7 +29,13 @@ function nextStage(stage: ApplicationStage): ApplicationStage | null {
   return STAGE_ORDER[idx + 1] ?? null;
 }
 
-export function AdminApplicationsBoard({ applications }: { applications: AppRow[] }) {
+export function AdminApplicationsBoard({
+  applications,
+  photoUrls,
+}: {
+  applications: AppRow[];
+  photoUrls: Record<string, string>;
+}) {
   const router = useRouter();
   const { label } = useCountries();
   const [isPending, startTransition] = useTransition();
@@ -65,13 +71,33 @@ export function AdminApplicationsBoard({ applications }: { applications: AppRow[
                   return (
                     <Card key={a.id}>
                       <CardContent className="space-y-2 pt-4 text-sm">
-                        <Link href={`/admin/workers/${a.worker_id}`} className="font-medium hover:underline">
-                          {a.worker_profiles?.name}
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          {photoUrls[a.worker_id] ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={photoUrls[a.worker_id]}
+                              alt=""
+                              className="h-10 w-10 shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground">
+                              ບໍ່ມີຮູບ
+                            </div>
+                          )}
+                          <Link href={`/admin/workers/${a.worker_id}#files`} className="font-medium hover:underline">
+                            {a.worker_profiles?.name}
+                          </Link>
+                        </div>
                         <p className="text-xs text-muted-foreground">{a.jobs?.title}</p>
                         <Badge variant="secondary" className="text-xs">
                           {label(a.country)}
                         </Badge>
+                        <Link
+                          href={`/admin/workers/${a.worker_id}#files`}
+                          className="block text-xs text-emerald-700 hover:underline"
+                        >
+                          📎 ເບິ່ງໄຟລ໌/ເອກະສານທັງໝົດ →
+                        </Link>
                         <div className="flex gap-1.5 pt-1">
                           {next && (
                             <Button

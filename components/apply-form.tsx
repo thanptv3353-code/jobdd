@@ -7,10 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { FileUploadField } from "@/components/file-upload-field";
+import { FileUploadField, type UploadedFileInfo } from "@/components/file-upload-field";
+import { AdditionalFilesField, type PendingFile } from "@/components/additional-files-field";
 import { AddressGroup } from "@/components/address-group";
 import { useCountries } from "@/components/countries-provider";
-import { registerWorker, submitApplication } from "@/lib/actions";
+import { recordWorkerFile, registerWorker, submitApplication } from "@/lib/actions";
 import { checkEligibility, docLabel } from "@/lib/eligibility";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -25,6 +26,7 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
   const router = useRouter();
   const { label, get } = useCountries();
   const [isPending, startTransition] = useTransition();
+  const [workerId] = useState(() => crypto.randomUUID());
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -36,10 +38,15 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
   const [curVillage, setCurVillage] = useState("");
   const [curDistrict, setCurDistrict] = useState("");
   const [curProvince, setCurProvince] = useState("");
-  const [workerId, setWorkerId] = useState<string | null>(null);
+  const [registered, setRegistered] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function addPendingFile(docType: string) {
+    return (info: UploadedFileInfo) => setPendingFiles((cur) => [...cur, { docType, ...info }]);
+  }
 
   const country = get(job.country);
   const eligibility = useMemo(() => checkEligibility(dob, country), [dob, country]);
@@ -51,7 +58,8 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
     setError(null);
     startTransition(async () => {
       try {
-        const worker = await registerWorker({
+        await registerWorker({
+          id: workerId,
           name,
           gender: "male",
           phone,
@@ -64,7 +72,18 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
           curProvince,
           preferredCountries: [job.country],
         });
-        setWorkerId(worker.id);
+        for (const f of pendingFiles) {
+          await recordWorkerFile({
+            workerId,
+            docType: f.docType,
+            filePath: f.path,
+            fileName: f.fileName,
+            mimeType: f.mimeType,
+            sizeBytes: f.sizeBytes,
+            description: f.description,
+          });
+        }
+        setRegistered(true);
         setStep(1);
       } catch {
         setError("ເກີດຂໍ້ຜິດພາດ ກະລຸນາລອງໃໝ່ອີກຄັ້ງ");
@@ -73,7 +92,7 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
   }
 
   function handleSubmit() {
-    if (!workerId) return;
+    if (!registered) return;
     setError(null);
     startTransition(async () => {
       try {
@@ -127,6 +146,14 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
         <CardContent className="pt-6">
           {step === 0 && (
             <div className="space-y-4">
+              <FileUploadField
+                workerId={workerId}
+                docType="photo"
+                label="ຮູບຖ່າຍ 3x4"
+                note="ບໍ່ບັງຄັບ"
+                deferRecord
+                onUploaded={addPendingFile("photo")}
+              />
               <Field label="ຊື່ ແລະ ນາມສະກຸນ">
                 <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ທ້າວ/ນາງ ..." />
               </Field>
@@ -165,7 +192,7 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
             </div>
           )}
 
-          {step === 1 && workerId && (
+          {step === 1 && registered && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 ອັບໂຫຼດຮູບຖ່າຍ/ສະແກນເອກະສານ — ຖ້າຍັງບໍ່ຄົບ ສາມາດສະໝັກກ່ອນ ແລ້ວນຳມາຍື່ນເພີ່ມພາຍຫຼັງໄດ້
@@ -186,6 +213,21 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
                   ⚠ ຍັງຂາດ {missingDocs.length} ເອກະສານ — ສາມາດສະໝັກກ່ອນໄດ້ ພະນັກງານຈະແຈ້ງໃຫ້ນຳມາເພີ່ມ
                 </p>
               )}
+              <div className="space-y-1.5 pt-2">
+                <Label>ເອກະສານເພີ່ມເຕີມ (ບໍ່ບັງຄັບ) — ເຊັ່ນ ຊີວະປະຫວັດ (CV)</Label>
+                <AdditionalFilesField
+                  workerId={workerId}
+                  onFileUploaded={(f) => recordWorkerFile({
+                    workerId,
+                    docType: f.docType,
+                    filePath: f.path,
+                    fileName: f.fileName,
+                    mimeType: f.mimeType,
+                    sizeBytes: f.sizeBytes,
+                    description: f.description,
+                  })}
+                />
+              </div>
             </div>
           )}
 

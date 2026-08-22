@@ -5,12 +5,21 @@ import { createClient } from "@/lib/supabase/client";
 import { recordWorkerFile } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 
+export interface UploadedFileInfo {
+  path: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
 export function FileUploadField({
   workerId,
   docType,
   label,
   required,
   note,
+  description,
+  deferRecord = false,
   onUploaded,
 }: {
   workerId: string;
@@ -18,7 +27,11 @@ export function FileUploadField({
   label: string;
   required?: boolean;
   note?: string;
-  onUploaded?: () => void;
+  description?: string;
+  /** If true, skips writing to worker_files (the worker row may not exist yet) — the
+   * caller is responsible for calling recordWorkerFile itself once it does. */
+  deferRecord?: boolean;
+  onUploaded?: (info: UploadedFileInfo) => void;
 }) {
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -38,18 +51,21 @@ export function FileUploadField({
         .upload(path, file, { contentType: file.type });
       if (uploadError) throw uploadError;
 
-      await recordWorkerFile({
-        workerId,
-        docType,
-        filePath: path,
-        fileName: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size,
-      });
+      if (!deferRecord) {
+        await recordWorkerFile({
+          workerId,
+          docType,
+          filePath: path,
+          fileName: file.name,
+          mimeType: file.type,
+          sizeBytes: file.size,
+          description,
+        });
+      }
 
       setFileName(file.name);
       setStatus("done");
-      onUploaded?.();
+      onUploaded?.({ path, fileName: file.name, mimeType: file.type, sizeBytes: file.size });
     } catch {
       setStatus("error");
     }

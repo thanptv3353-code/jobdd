@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -19,9 +20,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white">
-            DD
-          </span>
+          <Image src="/leba-logo.jpg" alt="LEBA" width={32} height={32} className="rounded-full" />
           <span className="text-lg font-bold tracking-tight">Job DD</span>
         </Link>
 

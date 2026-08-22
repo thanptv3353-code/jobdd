@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -40,9 +41,7 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-sm">
         <CardContent className="pt-6">
           <div className="mb-6 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white">
-              DD
-            </span>
+            <Image src="/leba-logo.jpg" alt="LEBA" width={32} height={32} className="rounded-full" />
             <span className="text-lg font-bold">Job DD Admin</span>
           </div>
 

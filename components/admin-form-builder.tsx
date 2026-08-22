@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addFormField, deleteFormField, updateFormField } from "@/lib/actions";
+import { addFormField, deleteFormField, updateBuiltinFormField, updateFormField } from "@/lib/actions";
 import type { Database } from "@/lib/supabase/database.types";
 
 type FormField = Database["public"]["Tables"]["form_fields"]["Row"];
@@ -32,8 +32,9 @@ const TYPE_LABEL: Record<FieldType, string> = {
   textarea: "ຂໍ້ຄວາມຍາວ",
   number: "ຕົວເລກ",
   date: "ວັນທີ",
-  select: "ລາຍການເລືອກ",
-  checkbox: "ຊ່ອງຕິກ",
+  select: "ຕົວເລືອກດຽວ (dropdown)",
+  multiselect: "ຫຼາຍຕົວເລືອກ (ຕິກໄດ້ຫຼາຍອັນ)",
+  checkbox: "ຊ່ອງຕິກ (ແມ່ນ/ບໍ່)",
 };
 
 export function AdminFormBuilder({ fields }: { fields: FormField[] }) {
@@ -56,7 +57,7 @@ export function AdminFormBuilder({ fields }: { fields: FormField[] }) {
         <div>
           <h1 className="text-2xl font-bold">ອອກແບບຟອມລົງທະບຽນ</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            ຊ່ອງຂໍ້ມູນເພີ່ມເຕີມນອກເໜືອຈາກຟິວອັດພື້ນຖານ ຈະສະແດງຢູ່ໜ້າ /register
+            ຄວບຄຸມທຸກຊ່ອງໃນໜ້າ /register — ທັງຊ່ອງພື້ນຖານ (ປ້າຍ &quot;ພື້ນຖານ&quot;) ແລະ ຊ່ອງທີ່ທ່ານເພີ່ມເອງ
           </p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -88,7 +89,11 @@ export function AdminFormBuilder({ fields }: { fields: FormField[] }) {
                 <td className="px-4 py-2.5 font-medium">{f.label}</td>
                 <td className="px-4 py-2.5 text-muted-foreground">{f.field_key}</td>
                 <td className="px-4 py-2.5">
-                  <Badge variant="secondary">{TYPE_LABEL[f.field_type]}</Badge>
+                  {f.is_builtin ? (
+                    <Badge className="bg-sky-100 text-sky-800 border-sky-200">ພື້ນຖານ</Badge>
+                  ) : (
+                    <Badge variant="secondary">{TYPE_LABEL[f.field_type]}</Badge>
+                  )}
                 </td>
                 <td className="px-4 py-2.5">{f.required ? "✅" : "–"}</td>
                 <td className="px-4 py-2.5">
@@ -96,15 +101,17 @@ export function AdminFormBuilder({ fields }: { fields: FormField[] }) {
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingField(f)}>
                       ແກ້ໄຂ
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs text-red-600 hover:bg-red-50"
-                      disabled={isPending}
-                      onClick={() => handleDelete(f)}
-                    >
-                      ລຶບ
-                    </Button>
+                    {!f.is_builtin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs text-red-600 hover:bg-red-50"
+                        disabled={isPending}
+                        onClick={() => handleDelete(f)}
+                      >
+                        ລຶບ
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -122,12 +129,69 @@ export function AdminFormBuilder({ fields }: { fields: FormField[] }) {
 
       <Dialog open={!!editingField} onOpenChange={(open) => !open && setEditingField(null)}>
         <DialogContent>
-          {editingField && (
-            <FieldForm field={editingField} nextOrder={0} onDone={() => setEditingField(null)} />
-          )}
+          {editingField &&
+            (editingField.is_builtin ? (
+              <BuiltinFieldForm field={editingField} onDone={() => setEditingField(null)} />
+            ) : (
+              <FieldForm field={editingField} nextOrder={0} onDone={() => setEditingField(null)} />
+            ))}
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function BuiltinFieldForm({ field, onDone }: { field: FormField; onDone: () => void }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [label, setLabel] = useState(field.label);
+  const [required, setRequired] = useState(field.required);
+  const [sortOrder, setSortOrder] = useState(String(field.sort_order));
+
+  function handleSave() {
+    startTransition(async () => {
+      await updateBuiltinFormField(field.id, {
+        label,
+        required,
+        sortOrder: Number(sortOrder) || 0,
+      });
+      router.refresh();
+      onDone();
+    });
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>ແກ້ໄຂຊ່ອງພື້ນຖານ</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          ນີ້ແມ່ນຊ່ອງພື້ນຖານຂອງລະບົບ — ແກ້ໄຂໄດ້ສະເພາະປ້າຍຊື່, ບັງຄັບ, ແລະ ລຳດັບ (ບໍ່ສາມາດລຶບ ຫຼື ປ່ຽນປະເພດໄດ້)
+        </p>
+        <div className="space-y-1.5">
+          <Label>ປ້າຍຊື່</Label>
+          <Input value={label} onChange={(e) => setLabel(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ລຳດັບ</Label>
+            <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
+          </div>
+          <div className="flex items-end pb-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} />
+              ບັງຄັບຕື່ມ
+            </label>
+          </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={handleSave} disabled={!label || isPending} className="bg-emerald-600 hover:bg-emerald-700">
+          ບັນທຶກ
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
@@ -168,7 +232,10 @@ function FieldForm({
         fieldKey,
         label,
         fieldType,
-        options: fieldType === "select" ? options.split(",").map((o) => o.trim()).filter(Boolean) : [],
+        options:
+          fieldType === "select" || fieldType === "multiselect"
+            ? options.split(",").map((o) => o.trim()).filter(Boolean)
+            : [],
         required,
         sortOrder: Number(sortOrder) || 0,
       };
@@ -211,7 +278,7 @@ function FieldForm({
             </SelectContent>
           </Select>
         </div>
-        {fieldType === "select" && (
+        {(fieldType === "select" || fieldType === "multiselect") && (
           <div className="space-y-1.5">
             <Label>ລາຍການເລືອກ (ຄັ່ນດ້ວຍ ,)</Label>
             <Input value={options} onChange={(e) => setOptions(e.target.value)} placeholder="ມ.6, ປວສ, ປະລິນຍາຕີ" />
