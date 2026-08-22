@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">ໃບສະໝັກຫຼ້າສຸດ</h2>
-              <Link href="/admin/applications" className="text-sm text-emerald-700 hover:underline">
+              <Link href="/admin/applicants" className="text-sm text-emerald-700 hover:underline">
                 ເບິ່ງທັງໝົດ →
               </Link>
             </div>

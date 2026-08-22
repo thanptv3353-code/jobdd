@@ -127,7 +127,19 @@ export async function updateApplicationStage(applicationId: string, stage: Appli
   const supabase = await createClient();
   const { error } = await supabase.from("applications").update({ stage }).eq("id", applicationId);
   if (error) throw error;
-  revalidatePath("/admin/applications");
+  revalidatePath("/admin/applicants");
+  revalidatePath("/admin/workers");
+  revalidatePath("/admin");
+}
+
+export async function scheduleInterview(applicationId: string, interviewAt: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("applications")
+    .update({ stage: "interview", interview_at: interviewAt })
+    .eq("id", applicationId);
+  if (error) throw error;
+  revalidatePath("/admin/applicants");
   revalidatePath("/admin/workers");
   revalidatePath("/admin");
 }
@@ -285,7 +297,7 @@ export async function updateApplication(
     .update({ stage: input.stage, documents: input.documents })
     .eq("id", applicationId);
   if (error) throw error;
-  revalidatePath("/admin/applications");
+  revalidatePath("/admin/applicants");
   revalidatePath("/admin/workers");
   revalidatePath("/admin");
 }
@@ -294,7 +306,7 @@ export async function deleteApplication(applicationId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("applications").delete().eq("id", applicationId);
   if (error) throw error;
-  revalidatePath("/admin/applications");
+  revalidatePath("/admin/applicants");
   revalidatePath("/admin/workers");
 }
 

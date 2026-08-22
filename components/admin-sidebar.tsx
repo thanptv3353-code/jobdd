@@ -9,7 +9,7 @@ import { signOutStaff } from "@/lib/actions";
 const NAV = [
   { href: "/admin", label: "ພາບລວມ", icon: "📊" },
   { href: "/admin/workers", label: "ຜູ້ຫາງານ", icon: "👥" },
-  { href: "/admin/applications", label: "ໃບສະໝັກ", icon: "📄" },
+  { href: "/admin/applicants", label: "ລາຍຊື່ຜູ້ສະໝັກ", icon: "📋" },
   { href: "/admin/jobs", label: "ຕຳແໜ່ງງານ", icon: "💼" },
   { href: "/admin/members", label: "ບໍລິສັດສະມາຊິກ", icon: "🏢" },
   { href: "/admin/countries", label: "ປະເທດປາຍທາງ", icon: "🌏" },
@@ -24,7 +24,7 @@ export function AdminSidebar({ userEmail }: { userEmail: string }) {
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r bg-muted/20 p-4">
       <Link href="/" className="mb-6 flex items-center gap-2 px-2">
-        <Image src="/leba-logo.jpg" alt="LEBA" width={28} height={28} className="rounded-full" />
+        <Image src="/jobdd-logo.png" alt="Job DD" width={32} height={32} className="rounded-lg" />
         <span className="font-bold">Job DD Admin</span>
       </Link>
       <nav className="space-y-1">

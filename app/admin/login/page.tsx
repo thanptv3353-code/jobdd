@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-sm">
         <CardContent className="pt-6">
           <div className="mb-6 flex items-center gap-2">
-            <Image src="/leba-logo.jpg" alt="LEBA" width={32} height={32} className="rounded-full" />
+            <Image src="/jobdd-logo.png" alt="Job DD" width={36} height={36} className="rounded-lg" />
             <span className="text-lg font-bold">Job DD Admin</span>
           </div>
 

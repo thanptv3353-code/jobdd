@@ -121,6 +121,7 @@ export interface Database {
           stage: ApplicationStage;
           documents: Record<string, boolean>;
           submitted_at: string;
+          interview_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -134,6 +135,7 @@ export interface Database {
           stage?: ApplicationStage;
           country?: Country;
           documents?: Record<string, boolean>;
+          interview_at?: string | null;
         };
         Relationships: [
           {

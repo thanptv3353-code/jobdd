@@ -20,8 +20,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/leba-logo.jpg" alt="LEBA" width={32} height={32} className="rounded-full" />
-          <span className="text-lg font-bold tracking-tight">Job DD</span>
+          <Image src="/jobdd-logo.png" alt="Job DD" width={44} height={44} className="rounded-xl" />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

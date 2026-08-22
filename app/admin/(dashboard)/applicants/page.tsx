@@ -1,11 +1,11 @@
-import { AdminApplicationsBoard } from "@/components/admin-applications-board";
+import { AdminApplicantsList } from "@/components/admin-applicants-list";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function AdminApplicationsPage() {
+export default async function AdminApplicantsPage() {
   const supabase = await createClient();
   const { data: applications } = await supabase
     .from("applications")
-    .select("id, stage, country, worker_id, documents, worker_profiles(name), jobs(title)")
+    .select("id, stage, country, worker_id, submitted_at, interview_at, worker_profiles(name, phone), jobs(title)")
     .order("submitted_at", { ascending: false });
 
   const workerIds = [...new Set((applications ?? []).map((a) => a.worker_id))];
@@ -31,5 +31,5 @@ export default async function AdminApplicationsPage() {
     })
   );
 
-  return <AdminApplicationsBoard applications={applications ?? []} photoUrls={photoUrls} />;
+  return <AdminApplicantsList applications={applications ?? []} photoUrls={photoUrls} />;
 }
