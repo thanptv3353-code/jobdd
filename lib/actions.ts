@@ -411,6 +411,8 @@ type MemberInput = {
   description: string;
   establishedYear: number;
   countryFocus: Country[];
+  contactPerson?: string;
+  contactPhone?: string;
 };
 
 export async function addMember(input: MemberInput) {
@@ -420,6 +422,8 @@ export async function addMember(input: MemberInput) {
     description: input.description,
     established_year: input.establishedYear,
     country_focus: input.countryFocus,
+    contact_person: input.contactPerson || null,
+    contact_phone: input.contactPhone || null,
   });
   if (error) throw error;
   revalidatePath("/admin/members");
@@ -435,6 +439,8 @@ export async function updateMember(memberId: string, input: MemberInput) {
       description: input.description,
       established_year: input.establishedYear,
       country_focus: input.countryFocus,
+      contact_person: input.contactPerson || null,
+      contact_phone: input.contactPhone || null,
     })
     .eq("id", memberId);
   if (error) throw error;

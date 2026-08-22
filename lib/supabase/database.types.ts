@@ -18,6 +18,8 @@ export interface Database {
           description: string;
           country_focus: Country[];
           established_year: number | null;
+          contact_person: string | null;
+          contact_phone: string | null;
           created_at: string;
         };
         Insert: {
@@ -26,6 +28,8 @@ export interface Database {
           description?: string;
           country_focus?: Country[];
           established_year?: number | null;
+          contact_person?: string | null;
+          contact_phone?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["members"]["Insert"]>;
         Relationships: [];

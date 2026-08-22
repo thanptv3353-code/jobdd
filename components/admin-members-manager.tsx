@@ -64,6 +64,13 @@ export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs
                   <p className="font-semibold">{m.name}</p>
                   <span className="text-xs text-muted-foreground">{m.established_year}</span>
                 </div>
+                {(m.contact_person || m.contact_phone) && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {m.contact_person}
+                    {m.contact_person && m.contact_phone && " · "}
+                    {m.contact_phone}
+                  </p>
+                )}
                 <p className="mt-1 text-sm text-muted-foreground">{m.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {m.country_focus.map((c) => (
@@ -114,6 +121,8 @@ function MemberForm({ member, onDone }: { member?: Member; onDone: () => void })
   const [description, setDescription] = useState(member?.description ?? "");
   const [year, setYear] = useState(String(member?.established_year ?? new Date().getFullYear()));
   const [selectedCountries, setSelectedCountries] = useState<Country[]>(member?.country_focus ?? []);
+  const [contactPerson, setContactPerson] = useState(member?.contact_person ?? "");
+  const [contactPhone, setContactPhone] = useState(member?.contact_phone ?? "");
 
   function toggle(c: Country) {
     setSelectedCountries((cur) => (cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
@@ -126,6 +135,8 @@ function MemberForm({ member, onDone }: { member?: Member; onDone: () => void })
         description,
         establishedYear: Number(year) || new Date().getFullYear(),
         countryFocus: selectedCountries,
+        contactPerson,
+        contactPhone,
       };
       if (member) {
         await updateMember(member.id, payload);
@@ -146,6 +157,16 @@ function MemberForm({ member, onDone }: { member?: Member; onDone: () => void })
         <div className="space-y-1.5">
           <Label>ຊື່ບໍລິສັດ</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ຜູ້ປະສານງານ</Label>
+            <Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>ເບີໂທຜູ້ປະສານງານ</Label>
+            <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label>ລາຍລະອຽດ</Label>

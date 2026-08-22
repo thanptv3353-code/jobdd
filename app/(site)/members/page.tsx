@@ -25,6 +25,13 @@ export default async function MembersPage() {
                   </span>
                 )}
               </div>
+              {(m.contact_person || m.contact_phone) && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {m.contact_person}
+                  {m.contact_person && m.contact_phone && " · "}
+                  {m.contact_phone}
+                </p>
+              )}
               <p className="mt-2 text-sm text-muted-foreground">{m.description}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {m.country_focus.map((c) => (

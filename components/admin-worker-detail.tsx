@@ -14,6 +14,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
 import { ApplicationEditDialog } from "@/components/application-edit-dialog";
 import { AddressGroup } from "@/components/address-group";
@@ -26,6 +33,7 @@ import {
   deleteWorkerFile,
   getWorkerFileUrl,
   setWorkerStatus,
+  submitApplication,
   updateContactLog,
   updateWorkerProfile,
 } from "@/lib/actions";
@@ -46,6 +54,7 @@ type WorkerFile = Database["public"]["Tables"]["worker_files"]["Row"];
 type Application = Database["public"]["Tables"]["applications"]["Row"] & {
   jobs: { title: string } | null;
 };
+type OpenJob = { id: string; title: string; country: string };
 
 const STATUS_OPTIONS: AvailabilityStatus[] = ["available", "in_process", "placed", "paused", "stale"];
 
@@ -56,6 +65,7 @@ export function AdminWorkerDetail({
   contactLogs,
   files,
   formFields,
+  openJobs,
 }: {
   worker: Worker;
   applications: Application[];
@@ -63,11 +73,13 @@ export function AdminWorkerDetail({
   contactLogs: ContactLog[];
   files: WorkerFile[];
   formFields: { field_key: string; label: string }[];
+  openJobs: OpenJob[];
 }) {
   const router = useRouter();
   const { label } = useCountries();
   const [isPending, startTransition] = useTransition();
   const [note, setNote] = useState("");
+  const [applyJobId, setApplyJobId] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingApplication, setEditingApplication] = useState<Application | null>(null);
   const [editingLog, setEditingLog] = useState<ContactLog | null>(null);
@@ -122,6 +134,21 @@ export function AdminWorkerDetail({
     if (!confirm(`ລຶບໄຟລ໌ "${file.file_name}" ຖາວອນ?`)) return;
     startTransition(async () => {
       await deleteWorkerFile(file.id, file.file_path, worker.id);
+      router.refresh();
+    });
+  }
+
+  function handleApplyOnBehalf() {
+    const job = openJobs.find((j) => j.id === applyJobId);
+    if (!job) return;
+    startTransition(async () => {
+      await submitApplication({
+        workerId: worker.id,
+        jobId: job.id,
+        country: job.country,
+        documents: {},
+      });
+      setApplyJobId("");
       router.refresh();
     });
   }
@@ -209,6 +236,31 @@ export function AdminWorkerDetail({
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-4 flex items-end gap-2 border-t pt-4">
+            <div className="flex-1 space-y-1.5">
+              <Label>ສະໝັກວຽກໃຫ້ຄົນນີ້ (ພະນັກງານຊ່ວຍສະໝັກແທນ)</Label>
+              <Select value={applyJobId} onValueChange={setApplyJobId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="ເລືອກຕຳແໜ່ງງານ..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {openJobs.map((j) => (
+                    <SelectItem key={j.id} value={j.id}>
+                      {j.title} — {label(j.country)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              disabled={!applyJobId || isPending}
+              onClick={handleApplyOnBehalf}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              ສະໝັກໃຫ້
+            </Button>
           </div>
         </CardContent>
       </Card>

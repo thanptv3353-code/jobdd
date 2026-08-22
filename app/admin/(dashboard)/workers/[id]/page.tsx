@@ -13,6 +13,7 @@ export default async function AdminWorkerDetailPage({ params }: { params: Promis
     { data: contactLogs },
     { data: files },
     { data: formFields },
+    { data: openJobs },
   ] = await Promise.all([
     supabase.from("worker_profiles").select("*").eq("id", id).maybeSingle(),
     supabase
@@ -36,6 +37,7 @@ export default async function AdminWorkerDetailPage({ params }: { params: Promis
       .eq("worker_id", id)
       .order("uploaded_at", { ascending: false }),
     supabase.from("form_fields").select("field_key, label"),
+    supabase.from("jobs").select("id, title, country").eq("status", "open").order("title"),
   ]);
 
   if (!worker) notFound();
@@ -48,6 +50,7 @@ export default async function AdminWorkerDetailPage({ params }: { params: Promis
       contactLogs={contactLogs ?? []}
       files={files ?? []}
       formFields={formFields ?? []}
+      openJobs={openJobs ?? []}
     />
   );
 }
