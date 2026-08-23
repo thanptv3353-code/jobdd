@@ -265,15 +265,48 @@ export interface Database {
           id: string;
           user_id: string;
           name: string;
+          email: string | null;
+          role: "staff" | "super_admin";
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
           name?: string;
+          email?: string | null;
+          role?: "staff" | "super_admin";
         };
         Update: Partial<Database["public"]["Tables"]["staff"]["Insert"]>;
         Relationships: [];
+      };
+      application_events: {
+        Row: {
+          id: string;
+          application_id: string;
+          staff_id: string | null;
+          staff_name: string;
+          action: string;
+          detail: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          application_id: string;
+          staff_id?: string | null;
+          staff_name: string;
+          action: string;
+          detail?: string | null;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "application_events_application_id_fkey";
+            columns: ["application_id"];
+            isOneToOne: false;
+            referencedRelation: "applications";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       form_fields: {
         Row: {
@@ -388,6 +421,18 @@ export interface Database {
       is_staff: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      is_super_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      add_staff_by_email: {
+        Args: { p_email: string; p_name: string; p_role: string };
+        Returns: undefined;
+      };
+      remove_staff: {
+        Args: { p_staff_id: string };
+        Returns: undefined;
       };
     };
   };

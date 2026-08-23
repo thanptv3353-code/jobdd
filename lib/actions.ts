@@ -123,10 +123,36 @@ export async function setMyStatus(phone: string, status: AvailabilityStatus) {
 
 // ---------- Staff actions (auth required — RLS grants staff-only writes) ----------
 
+async function getCurrentStaff(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase.from("staff").select("id, name").eq("user_id", user.id).maybeSingle();
+  return data;
+}
+
+async function logApplicationEvent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  applicationId: string,
+  action: string,
+  detail?: string
+) {
+  const staff = await getCurrentStaff(supabase);
+  await supabase.from("application_events").insert({
+    application_id: applicationId,
+    staff_id: staff?.id ?? null,
+    staff_name: staff?.name || "ລະບົບ",
+    action,
+    detail: detail ?? null,
+  });
+}
+
 export async function updateApplicationStage(applicationId: string, stage: ApplicationStage) {
   const supabase = await createClient();
   const { error } = await supabase.from("applications").update({ stage }).eq("id", applicationId);
   if (error) throw error;
+  await logApplicationEvent(supabase, applicationId, stage);
   revalidatePath("/admin/applicants");
   revalidatePath("/admin/workers");
   revalidatePath("/admin");
@@ -139,6 +165,12 @@ export async function scheduleInterview(applicationId: string, interviewAt: stri
     .update({ stage: "interview", interview_at: interviewAt })
     .eq("id", applicationId);
   if (error) throw error;
+  await logApplicationEvent(
+    supabase,
+    applicationId,
+    "interview",
+    new Date(interviewAt).toLocaleString("lo-LA")
+  );
   revalidatePath("/admin/applicants");
   revalidatePath("/admin/workers");
   revalidatePath("/admin");
@@ -599,4 +631,24 @@ export async function signUpStaff(email: string, password: string) {
 export async function signOutStaff() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+}
+
+// ---------- Staff management (super admin only) ----------
+
+export async function addStaffMember(input: { email: string; name: string; role: "staff" | "super_admin" }) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("add_staff_by_email", {
+    p_email: input.email,
+    p_name: input.name,
+    p_role: input.role,
+  });
+  if (error) throw error;
+  revalidatePath("/admin/staff");
+}
+
+export async function removeStaffMember(staffId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_staff", { p_staff_id: staffId });
+  if (error) throw error;
+  revalidatePath("/admin/staff");
 }

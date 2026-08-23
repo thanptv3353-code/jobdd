@@ -18,6 +18,7 @@ import type { Database } from "@/lib/supabase/database.types";
 type Application = Database["public"]["Tables"]["applications"]["Row"];
 type Worker = Database["public"]["Tables"]["worker_profiles"]["Row"];
 type WorkerFile = Database["public"]["Tables"]["worker_files"]["Row"];
+type ApplicationEvent = Database["public"]["Tables"]["application_events"]["Row"];
 
 const DEFAULT_MESSAGE_TEMPLATE =
   'ສະບາຍດີ {ຊື່}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດວຽກສຳລັບຕຳແໜ່ງ "{ຕຳແໜ່ງ}" ວັນທີ {ວັນທີ} ເວລາ {ເວລາ} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, {ອົງກອນ}';
@@ -42,6 +43,7 @@ export function AdminApplicantDetail({
   worker,
   jobTitle,
   files,
+  events,
   orgName,
   messageTemplate,
 }: {
@@ -49,6 +51,7 @@ export function AdminApplicantDetail({
   worker: Worker;
   jobTitle: string;
   files: WorkerFile[];
+  events: ApplicationEvent[];
   orgName: string;
   messageTemplate?: string | null;
 }) {
@@ -243,6 +246,31 @@ export function AdminApplicantDetail({
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardContent className="pt-6">
+          <h2 className="font-semibold">ປະຫວັດການດຳເນີນການ</h2>
+          <div className="mt-3 space-y-3">
+            {events.length === 0 && (
+              <p className="text-sm text-muted-foreground">ຍັງບໍ່ມີການດຳເນີນການ</p>
+            )}
+            {events.map((e) => (
+              <div key={e.id} className="flex justify-between border-b pb-2 text-sm last:border-0">
+                <div>
+                  <p className="font-medium">
+                    {STAGE_LABEL[e.action as ApplicationStage] ?? e.action}
+                  </p>
+                  {e.detail && <p className="text-xs text-muted-foreground">{e.detail}</p>}
+                </div>
+                <div className="text-right text-xs text-muted-foreground">
+                  <p>{e.staff_name}</p>
+                  <p>{new Date(e.created_at).toLocaleString("lo-LA")}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

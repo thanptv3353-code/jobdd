@@ -19,7 +19,9 @@ const NAV = [
   { href: "/admin/settings", label: "ຂໍ້ມູນສະມາຄົມ", icon: "⚙️" },
 ];
 
-export function AdminSidebar({ userEmail }: { userEmail: string }) {
+const SUPER_ADMIN_NAV = { href: "/admin/staff", label: "ພະນັກງານ", icon: "🔑" };
+
+export function AdminSidebar({ userEmail, isSuperAdmin }: { userEmail: string; isSuperAdmin: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -30,6 +32,8 @@ export function AdminSidebar({ userEmail }: { userEmail: string }) {
     router.refresh();
   }
 
+  const nav = isSuperAdmin ? [...NAV, SUPER_ADMIN_NAV] : NAV;
+
   const sidebarContent = (
     <>
       <Link href="/" className="mb-6 flex items-center gap-2 px-2" onClick={() => setMobileOpen(false)}>
@@ -37,7 +41,7 @@ export function AdminSidebar({ userEmail }: { userEmail: string }) {
         <span className="font-bold">Job DD Admin</span>
       </Link>
       <nav className="space-y-1">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const active = pathname === item.href;
           return (
             <Link
