@@ -24,6 +24,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
           <Image src="/jobdd-logo.png" alt="Job DD" width={44} height={44} className="rounded-xl" />
+          <span className="text-lg font-bold text-emerald-700">Job DD</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
