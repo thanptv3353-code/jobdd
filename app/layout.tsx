@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Job DD — ຫາງານພາຍໃນ ແລະ ຕ່າງປະເທດ",
+  title: "Job DD — ຫາວຽກພາຍໃນ ແລະ ຕ່າງປະເທດ",
   description:
     "Job DD ໂດຍສະມາຄົມທຸລະກິດບໍລິການຈັດຫາງານລາວ — ຄົ້ນຫາ ແລະ ສະໝັກວຽກພາຍໃນ, ໄທ, ເກົາຫຼີ ແລະ ຢີ່ປຸ່ນ",
   appleWebApp: {

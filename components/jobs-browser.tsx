@@ -28,11 +28,11 @@ export function JobsBrowser({ jobs, initialCountry }: { jobs: Job[]; initialCoun
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-3xl font-bold">ຄົ້ນຫາວຽກ</h1>
-      <p className="mt-1 text-muted-foreground">ພົບ {filtered.length} ຕຳແໜ່ງງານທີ່ເປີດຮັບ</p>
+      <p className="mt-1 text-muted-foreground">ພົບ {filtered.length} ຕຳແໜ່ງວຽກທີ່ເປີດຮັບ</p>
 
       <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-center">
         <Input
-          placeholder="ຄົ້ນຫາຊື່ຕຳແໜ່ງງານ..."
+          placeholder="ຄົ້ນຫາຊື່ຕຳແໜ່ງວຽກ..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="md:max-w-xs"
@@ -55,7 +55,7 @@ export function JobsBrowser({ jobs, initialCountry }: { jobs: Job[]; initialCoun
         ))}
         {filtered.length === 0 && (
           <p className="col-span-full py-12 text-center text-muted-foreground">
-            ບໍ່ພົບຕຳແໜ່ງງານທີ່ຄົ້ນຫາ
+            ບໍ່ພົບຕຳແໜ່ງວຽກທີ່ຄົ້ນຫາ
           </p>
         )}
       </div>

@@ -256,7 +256,7 @@ function FieldForm({
       </DialogHeader>
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label>ປ້າຍຊື່ (ສິ່ງທີ່ຜູ້ຫາງານເຫັນ)</Label>
+          <Label>ປ້າຍຊື່ (ສິ່ງທີ່ຜູ້ຫາວຽກເຫັນ)</Label>
           <Input value={label} onChange={(e) => handleLabelChange(e.target.value)} placeholder="ເຊັ່ນ: ລະດັບການສຶກສາ" />
         </div>
         <div className="space-y-1.5">

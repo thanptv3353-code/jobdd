@@ -13,7 +13,7 @@ import type { Database } from "@/lib/supabase/database.types";
 type Settings = Database["public"]["Tables"]["site_settings"]["Row"];
 
 const DEFAULT_INTERVIEW_TEMPLATE =
-  'ສະບາຍດີ {ຊື່}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດງານສຳລັບຕຳແໜ່ງ "{ຕຳແໜ່ງ}" ວັນທີ {ວັນທີ} ເວລາ {ເວລາ} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, {ອົງກອນ}';
+  'ສະບາຍດີ {ຊື່}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດວຽກສຳລັບຕຳແໜ່ງ "{ຕຳແໜ່ງ}" ວັນທີ {ວັນທີ} ເວລາ {ເວລາ} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, {ອົງກອນ}';
 
 export function AdminSiteSettings({ settings }: { settings: Settings | null }) {
   const router = useRouter();

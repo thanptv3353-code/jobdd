@@ -20,7 +20,7 @@ type Worker = Database["public"]["Tables"]["worker_profiles"]["Row"];
 type WorkerFile = Database["public"]["Tables"]["worker_files"]["Row"];
 
 const DEFAULT_MESSAGE_TEMPLATE =
-  'ສະບາຍດີ {ຊື່}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດງານສຳລັບຕຳແໜ່ງ "{ຕຳແໜ່ງ}" ວັນທີ {ວັນທີ} ເວລາ {ເວລາ} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, {ອົງກອນ}';
+  'ສະບາຍດີ {ຊື່}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດວຽກສຳລັບຕຳແໜ່ງ "{ຕຳແໜ່ງ}" ວັນທີ {ວັນທີ} ເວລາ {ເວລາ} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, {ອົງກອນ}';
 
 function buildWhatsappLink(phone: string, message: string) {
   const digits = phone.replace(/[^0-9]/g, "").replace(/^0/, "");

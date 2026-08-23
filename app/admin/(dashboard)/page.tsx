@@ -72,7 +72,7 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold">ຕຳແໜ່ງງານເປີດຮັບ</h2>
+              <h2 className="font-semibold">ຕຳແໜ່ງວຽກເປີດຮັບ</h2>
               <Link href="/admin/jobs" className="text-sm text-emerald-700 hover:underline">
                 ຈັດການ →
               </Link>

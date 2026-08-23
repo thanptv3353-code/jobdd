@@ -109,7 +109,7 @@ export function RegisterForm({ fields }: { fields: FormField[] }) {
           ພວກເຮົາຈະແຈ້ງເຕືອນທ່ານທັນທີເມື່ອມີວຽກໃໝ່ໃນປະເທດທີ່ທ່ານສົນໃຈ
         </p>
         <Button className="mt-6" onClick={() => router.push("/jobs")}>
-          ໄປເບິ່ງຕຳແໜ່ງງານ
+          ໄປເບິ່ງຕຳແໜ່ງວຽກ
         </Button>
       </div>
     );
@@ -133,7 +133,7 @@ export function RegisterForm({ fields }: { fields: FormField[] }) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
-      <h1 className="text-2xl font-bold">ລົງທະບຽນຜູ້ຫາງານ</h1>
+      <h1 className="text-2xl font-bold">ລົງທະບຽນຜູ້ຫາວຽກ</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         ສ້າງໂປຣໄຟລ໌ຄັ້ງດຽວ ໃຊ້ສະໝັກໄດ້ຫຼາຍວຽກ ແລະ ຮັບແຈ້ງເຕືອນວຽກໃໝ່
       </p>

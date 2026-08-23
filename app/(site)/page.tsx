@@ -27,14 +27,14 @@ export default async function HomePage() {
                 <Link href="/jobs">ຄົ້ນຫາວຽກ</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/register">ລົງທະບຽນເປັນຜູ້ຫາງານ</Link>
+                <Link href="/register">ລົງທະບຽນເປັນຜູ້ຫາວຽກ</Link>
               </Button>
             </div>
           </div>
 
           <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatCard label="ຜູ້ຫາງານທີ່ຍັງວ່າງ" value={stats.available_workers} accent="text-emerald-700" />
-            <StatCard label="ຕຳແໜ່ງງານເປີດຮັບ" value={stats.open_jobs} accent="text-sky-700" />
+            <StatCard label="ຜູ້ຫາວຽກທີ່ຍັງວ່າງ" value={stats.available_workers} accent="text-emerald-700" />
+            <StatCard label="ຕຳແໜ່ງວຽກເປີດຮັບ" value={stats.open_jobs} accent="text-sky-700" />
             <StatCard label="ບໍລິສັດສະມາຊິກ" value={stats.members} accent="text-violet-700" />
             <StatCard label="ປະເທດປາຍທາງ" value={countries.length} accent="text-amber-700" />
           </div>
@@ -44,7 +44,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h2 className="text-2xl font-bold">ຕຳແໜ່ງງານແນະນຳ</h2>
+            <h2 className="text-2xl font-bold">ຕຳແໜ່ງວຽກແນະນຳ</h2>
             <p className="text-sm text-muted-foreground">ອັບເດດຫຼ້າສຸດຈາກບໍລິສັດສະມາຊິກ</p>
           </div>
           <Button asChild variant="link">
@@ -57,7 +57,7 @@ export default async function HomePage() {
           ))}
           {featured.length === 0 && (
             <p className="col-span-full py-12 text-center text-muted-foreground">
-              ຍັງບໍ່ມີຕຳແໜ່ງງານເປີດຮັບ
+              ຍັງບໍ່ມີຕຳແໜ່ງວຽກເປີດຮັບ
             </p>
           )}
         </div>

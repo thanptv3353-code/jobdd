@@ -38,7 +38,7 @@ export function AdminWorkersBrowser({ workers }: { workers: Worker[] }) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ຜູ້ຫາງານ</h1>
+        <h1 className="text-2xl font-bold">ຜູ້ຫາວຽກ</h1>
         <p className="text-sm text-muted-foreground">{filtered.length} ຄົນ</p>
       </div>
 
@@ -101,7 +101,7 @@ export function AdminWorkersBrowser({ workers }: { workers: Worker[] }) {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
-                  ບໍ່ພົບຜູ້ຫາງານ
+                  ບໍ່ພົບຜູ້ຫາວຽກ
                 </td>
               </tr>
             )}

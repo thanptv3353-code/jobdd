@@ -243,7 +243,7 @@ export function AdminWorkerDetail({
               <Label>ສະໝັກວຽກໃຫ້ຄົນນີ້ (ພະນັກງານຊ່ວຍສະໝັກແທນ)</Label>
               <Select value={applyJobId} onValueChange={setApplyJobId}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="ເລືອກຕຳແໜ່ງງານ..." />
+                  <SelectValue placeholder="ເລືອກຕຳແໜ່ງວຽກ..." />
                 </SelectTrigger>
                 <SelectContent>
                   {openJobs.map((j) => (
@@ -365,11 +365,11 @@ export function AdminWorkerDetail({
       <Card className="mt-4 border-red-200">
         <CardContent className="flex items-center justify-between pt-6">
           <div>
-            <p className="text-sm font-medium text-red-800">ລຶບຂໍ້ມູນຜູ້ຫາງານນີ້</p>
+            <p className="text-sm font-medium text-red-800">ລຶບຂໍ້ມູນຜູ້ຫາວຽກນີ້</p>
             <p className="text-xs text-muted-foreground">ລຶບຖາວອນ ບໍ່ສາມາດກູ້ຄືນໄດ້</p>
           </div>
           <Button variant="outline" className="text-red-600 hover:bg-red-50" disabled={isPending} onClick={handleDeleteWorker}>
-            ລຶບຜູ້ຫາງານ
+            ລຶບຜູ້ຫາວຽກ
           </Button>
         </CardContent>
       </Card>

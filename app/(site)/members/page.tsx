@@ -41,7 +41,7 @@ export default async function MembersPage() {
                 ))}
               </div>
               <p className="mt-3 text-sm font-medium text-emerald-700">
-                {m.openJobCount} ຕຳແໜ່ງງານເປີດຮັບ
+                {m.openJobCount} ຕຳແໜ່ງວຽກເປີດຮັບ
               </p>
             </CardContent>
           </Card>

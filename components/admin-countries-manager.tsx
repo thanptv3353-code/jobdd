@@ -42,7 +42,7 @@ export function AdminCountriesManager({
   const [managingDocs, setManagingDocs] = useState<CountryRow | null>(null);
 
   function handleDelete(country: CountryRow) {
-    if (!confirm(`ລຶບປະເທດ "${country.label}" ຖາວອນ? (ຕຳແໜ່ງງານ/ໃບສະໝັກທີ່ໃຊ້ປະເທດນີ້ອາດຖືກກະທົບ)`))
+    if (!confirm(`ລຶບປະເທດ "${country.label}" ຖາວອນ? (ຕຳແໜ່ງວຽກ/ໃບສະໝັກທີ່ໃຊ້ປະເທດນີ້ອາດຖືກກະທົບ)`))
       return;
     startTransition(async () => {
       await deleteCountry(country.code);

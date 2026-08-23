@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Job DD — ຫາງານພາຍໃນ ແລະ ຕ່າງປະເທດ",
+    name: "Job DD — ຫາວຽກພາຍໃນ ແລະ ຕ່າງປະເທດ",
     short_name: "Job DD",
     description:
       "Job DD ໂດຍສະມາຄົມທຸລະກິດບໍລິການຈັດຫາງານລາວ — ຄົ້ນຫາ ແລະ ສະໝັກວຽກພາຍໃນ, ໄທ, ເກົາຫຼີ ແລະ ຢີ່ປຸ່ນ",

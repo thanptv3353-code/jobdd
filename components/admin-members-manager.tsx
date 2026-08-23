@@ -33,7 +33,7 @@ export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs
   const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   function handleDelete(member: Member) {
-    if (!confirm(`ລຶບບໍລິສັດ "${member.name}" ຖາວອນ? (ຕຳແໜ່ງງານທີ່ກ່ຽວຂ້ອງຈະຖືກລຶບນຳ)`)) return;
+    if (!confirm(`ລຶບບໍລິສັດ "${member.name}" ຖາວອນ? (ຕຳແໜ່ງວຽກທີ່ກ່ຽວຂ້ອງຈະຖືກລຶບນຳ)`)) return;
     startTransition(async () => {
       await deleteMember(member.id);
       router.refresh();

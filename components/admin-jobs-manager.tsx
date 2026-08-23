@@ -38,7 +38,7 @@ export function AdminJobsManager({ jobs, members }: { jobs: Job[]; members: Memb
   const [editingJob, setEditingJob] = useState<Job | null>(null);
 
   function handleDelete(job: Job) {
-    if (!confirm(`ລຶບຕຳແໜ່ງງານ "${job.title}" ຖາວອນ?`)) return;
+    if (!confirm(`ລຶບຕຳແໜ່ງວຽກ "${job.title}" ຖາວອນ?`)) return;
     startTransition(async () => {
       await deleteJob(job.id);
       router.refresh();
@@ -48,10 +48,10 @@ export function AdminJobsManager({ jobs, members }: { jobs: Job[]; members: Memb
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ຕຳແໜ່ງງານ</h1>
+        <h1 className="text-2xl font-bold">ຕຳແໜ່ງວຽກ</h1>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-emerald-600 hover:bg-emerald-700">+ ເພີ່ມຕຳແໜ່ງງານ</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700">+ ເພີ່ມຕຳແໜ່ງວຽກ</Button>
           </DialogTrigger>
           <DialogContent>
             <JobForm members={members} onDone={() => setCreateOpen(false)} />
@@ -161,7 +161,7 @@ function JobForm({ members, job, onDone }: { members: Member[]; job?: Job; onDon
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{job ? "ແກ້ໄຂຕຳແໜ່ງງານ" : "ເພີ່ມຕຳແໜ່ງງານໃໝ່"}</DialogTitle>
+        <DialogTitle>{job ? "ແກ້ໄຂຕຳແໜ່ງວຽກ" : "ເພີ່ມຕຳແໜ່ງວຽກໃໝ່"}</DialogTitle>
       </DialogHeader>
       <div className="space-y-3">
         <div className="space-y-1.5">

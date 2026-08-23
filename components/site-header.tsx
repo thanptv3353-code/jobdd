@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
-  { href: "/jobs", label: "ຫາງານ" },
+  { href: "/jobs", label: "ຫາວຽກ" },
   { href: "/members", label: "ບໍລິສັດສະມາຊິກ" },
   { href: "/about", label: "ກ່ຽວກັບພວກເຮົາ" },
   { href: "/dashboard", label: "ໃບສະໝັກຂອງຂ້ອຍ" },
