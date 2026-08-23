@@ -19,9 +19,22 @@ type Application = Database["public"]["Tables"]["applications"]["Row"];
 type Worker = Database["public"]["Tables"]["worker_profiles"]["Row"];
 type WorkerFile = Database["public"]["Tables"]["worker_files"]["Row"];
 
+const DEFAULT_MESSAGE_TEMPLATE =
+  'ສະບາຍດີ {ຊື່}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດງານສຳລັບຕຳແໜ່ງ "{ຕຳແໜ່ງ}" ວັນທີ {ວັນທີ} ເວລາ {ເວລາ} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, {ອົງກອນ}';
+
 function buildWhatsappLink(phone: string, message: string) {
   const digits = phone.replace(/[^0-9]/g, "").replace(/^0/, "");
   return `https://wa.me/856${digits}?text=${encodeURIComponent(message)}`;
+}
+
+function fillMessageTemplate(
+  template: string,
+  values: { ຊື່: string; ຕຳແໜ່ງ: string; ວັນທີ: string; ເວລາ: string; ອົງກອນ: string }
+) {
+  return Object.entries(values).reduce(
+    (message, [key, value]) => message.replaceAll(`{${key}}`, value),
+    template
+  );
 }
 
 export function AdminApplicantDetail({
@@ -30,12 +43,14 @@ export function AdminApplicantDetail({
   jobTitle,
   files,
   orgName,
+  messageTemplate,
 }: {
   application: Application;
   worker: Worker;
   jobTitle: string;
   files: WorkerFile[];
   orgName: string;
+  messageTemplate?: string | null;
 }) {
   const router = useRouter();
   const { label } = useCountries();
@@ -70,7 +85,13 @@ export function AdminApplicantDetail({
         month: "long",
         day: "numeric",
       });
-      const message = `ສະບາຍດີ ${worker.name}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດງານສຳລັບຕຳແໜ່ງ "${jobTitle}" ວັນທີ ${dateLabel} ເວລາ ${time} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, ${orgName}`;
+      const message = fillMessageTemplate(messageTemplate || DEFAULT_MESSAGE_TEMPLATE, {
+        ຊື່: worker.name,
+        ຕຳແໜ່ງ: jobTitle,
+        ວັນທີ: dateLabel,
+        ເວລາ: time,
+        ອົງກອນ: orgName,
+      });
       window.open(buildWhatsappLink(worker.phone, message), "_blank");
 
       setSchedulingOpen(false);

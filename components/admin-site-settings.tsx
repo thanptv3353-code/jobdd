@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { updateSiteSettings } from "@/lib/actions";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Settings = Database["public"]["Tables"]["site_settings"]["Row"];
+
+const DEFAULT_INTERVIEW_TEMPLATE =
+  'ສະບາຍດີ {ຊື່}, ທ່ານໄດ້ຮັບການນັດໝາຍສຳພາດງານສຳລັບຕຳແໜ່ງ "{ຕຳແໜ່ງ}" ວັນທີ {ວັນທີ} ເວລາ {ເວລາ} ນາລິກາ. ກະລຸນາກຽມຕົວມາຕາມນັດ. ຂອບໃຈ, {ອົງກອນ}';
 
 export function AdminSiteSettings({ settings }: { settings: Settings | null }) {
   const router = useRouter();
@@ -23,6 +27,9 @@ export function AdminSiteSettings({ settings }: { settings: Settings | null }) {
   const [facebookUrl, setFacebookUrl] = useState(settings?.facebook_url ?? "");
   const [tiktokUrl, setTiktokUrl] = useState(settings?.tiktok_url ?? "");
   const [youtubeUrl, setYoutubeUrl] = useState(settings?.youtube_url ?? "");
+  const [interviewMessageTemplate, setInterviewMessageTemplate] = useState(
+    settings?.interview_message_template ?? DEFAULT_INTERVIEW_TEMPLATE
+  );
   const [saved, setSaved] = useState(false);
 
   function handleSave() {
@@ -37,6 +44,7 @@ export function AdminSiteSettings({ settings }: { settings: Settings | null }) {
         facebookUrl,
         tiktokUrl,
         youtubeUrl,
+        interviewMessageTemplate,
       });
       router.refresh();
       setSaved(true);
@@ -86,14 +94,47 @@ export function AdminSiteSettings({ settings }: { settings: Settings | null }) {
             <Label>ລິ້ງ YouTube</Label>
             <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/@..." />
           </div>
+        </CardContent>
+      </Card>
 
-          {saved && <p className="text-sm text-emerald-600">✅ ບັນທຶກແລ້ວ</p>}
-
-          <Button onClick={handleSave} disabled={isPending} className="w-full bg-emerald-600 hover:bg-emerald-700">
-            {isPending ? "ກຳລັງບັນທຶກ..." : "ບັນທຶກ"}
+      <Card className="mt-6">
+        <CardContent className="space-y-3 pt-6">
+          <div>
+            <h2 className="font-semibold">ຂໍ້ຄວາມນັດສຳພາດຜ່ານ WhatsApp</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              ຂໍ້ຄວາມນີ້ຈະຖືກສົ່ງໃຫ້ຜູ້ສະໝັກອັດຕະໂນມັດຕອນແອັດມິນກົດ &quot;ນັດສຳພາດ&quot;. ໃຊ້ຄຳເຫຼົ່ານີ້ແທນຂໍ້ມູນຈິງ:{" "}
+              <code className="rounded bg-muted px-1">{"{ຊື່}"}</code>{" "}
+              <code className="rounded bg-muted px-1">{"{ຕຳແໜ່ງ}"}</code>{" "}
+              <code className="rounded bg-muted px-1">{"{ວັນທີ}"}</code>{" "}
+              <code className="rounded bg-muted px-1">{"{ເວລາ}"}</code>{" "}
+              <code className="rounded bg-muted px-1">{"{ອົງກອນ}"}</code>
+            </p>
+          </div>
+          <Textarea
+            rows={5}
+            value={interviewMessageTemplate}
+            onChange={(e) => setInterviewMessageTemplate(e.target.value)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setInterviewMessageTemplate(DEFAULT_INTERVIEW_TEMPLATE)}
+          >
+            ຄືນຄ່າເລີ່ມຕົ້ນ
           </Button>
         </CardContent>
       </Card>
+
+      {saved && <p className="mt-4 text-sm text-emerald-600">✅ ບັນທຶກແລ້ວ</p>}
+
+      <Button
+        onClick={handleSave}
+        disabled={isPending}
+        className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700"
+      >
+        {isPending ? "ກຳລັງບັນທຶກ..." : "ບັນທຶກ"}
+      </Button>
     </div>
   );
 }

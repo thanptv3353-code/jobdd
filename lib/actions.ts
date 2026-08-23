@@ -558,6 +558,7 @@ export async function updateSiteSettings(input: {
   facebookUrl?: string;
   tiktokUrl?: string;
   youtubeUrl?: string;
+  interviewMessageTemplate?: string;
 }) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -571,6 +572,7 @@ export async function updateSiteSettings(input: {
       facebook_url: input.facebookUrl || null,
       tiktok_url: input.tiktokUrl || null,
       youtube_url: input.youtubeUrl || null,
+      interview_message_template: input.interviewMessageTemplate || undefined,
     })
     .eq("id", true);
   if (error) throw error;

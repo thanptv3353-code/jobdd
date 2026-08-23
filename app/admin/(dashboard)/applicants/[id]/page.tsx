@@ -30,6 +30,7 @@ export default async function AdminApplicantDetailPage({ params }: { params: Pro
       jobTitle={application.jobs?.title ?? ""}
       files={files ?? []}
       orgName={settings?.org_abbreviation || settings?.org_name_lo || "Job DD"}
+      messageTemplate={settings?.interview_message_template}
     />
   );
 }

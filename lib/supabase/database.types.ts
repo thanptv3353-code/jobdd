@@ -344,6 +344,7 @@ export interface Database {
           facebook_url: string | null;
           tiktok_url: string | null;
           youtube_url: string | null;
+          interview_message_template: string;
           updated_at: string;
         };
         Insert: never;
@@ -356,6 +357,7 @@ export interface Database {
           facebook_url?: string | null;
           tiktok_url?: string | null;
           youtube_url?: string | null;
+          interview_message_template?: string;
         };
         Relationships: [];
       };
