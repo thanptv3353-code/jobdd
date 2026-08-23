@@ -642,13 +642,15 @@ export async function addStaffMember(input: { email: string; name: string; role:
     p_name: input.name,
     p_role: input.role,
   });
-  if (error) throw error;
+  if (error) return { error: error.message };
   revalidatePath("/admin/staff");
+  return { error: null };
 }
 
 export async function removeStaffMember(staffId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_staff", { p_staff_id: staffId });
-  if (error) throw error;
+  if (error) return { error: error.message };
   revalidatePath("/admin/staff");
+  return { error: null };
 }

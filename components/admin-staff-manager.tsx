@@ -32,7 +32,11 @@ export function AdminStaffManager({ staff, currentStaffId }: { staff: Staff[]; c
   function handleRemove(member: Staff) {
     if (!confirm(`ລຶບສິດເຂົ້າໃຊ້ admin ຂອງ "${member.name || member.email}" ຖາວອນ?`)) return;
     startTransition(async () => {
-      await removeStaffMember(member.id);
+      const { error } = await removeStaffMember(member.id);
+      if (error) {
+        alert(error);
+        return;
+      }
       router.refresh();
     });
   }
@@ -118,13 +122,13 @@ function AddStaffForm({ onDone }: { onDone: () => void }) {
   function handleSave() {
     setError("");
     startTransition(async () => {
-      try {
-        await addStaffMember({ email, name, role });
-        router.refresh();
-        onDone();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "ເກີດຂໍ້ຜິດພາດ");
+      const { error } = await addStaffMember({ email, name, role });
+      if (error) {
+        setError(error);
+        return;
       }
+      router.refresh();
+      onDone();
     });
   }
 
