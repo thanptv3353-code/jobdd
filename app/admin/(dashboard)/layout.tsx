@@ -36,9 +36,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <CountriesProvider countries={countries}>
-      <div className="flex min-h-screen flex-1">
+      <div className="flex min-h-screen flex-1 flex-col md:flex-row">
         <AdminSidebar userEmail={user.email ?? ""} />
-        <main className="flex-1 overflow-x-hidden bg-zinc-50 p-6">{children}</main>
+        <main className="flex-1 overflow-x-hidden bg-zinc-50 p-4 md:p-6">{children}</main>
       </div>
     </CountriesProvider>
   );

@@ -54,7 +54,7 @@ export function AdminApplicantsList({
         ))}
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-lg border bg-white">
+      <div className="mt-4 overflow-x-auto rounded-lg border bg-white">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
             <tr>
