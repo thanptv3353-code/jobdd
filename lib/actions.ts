@@ -445,6 +445,14 @@ type MemberInput = {
   countryFocus: Country[];
   contactPerson?: string;
   contactPhone?: string;
+  nameEn?: string;
+  address?: string;
+  email?: string;
+  lineId?: string;
+  licenseNo?: string;
+  licenseExpiry?: string;
+  director?: string;
+  sortOrder?: number;
 };
 
 export async function addMember(input: MemberInput) {
@@ -456,6 +464,14 @@ export async function addMember(input: MemberInput) {
     country_focus: input.countryFocus,
     contact_person: input.contactPerson || null,
     contact_phone: input.contactPhone || null,
+    address: input.address || null,
+    name_en: input.nameEn || null,
+    email: input.email || null,
+    line_id: input.lineId || null,
+    license_no: input.licenseNo || null,
+    license_expiry: input.licenseExpiry || null,
+    director: input.director || null,
+    sort_order: input.sortOrder ?? 0,
   });
   if (error) throw error;
   revalidatePath("/admin/members");
@@ -473,6 +489,14 @@ export async function updateMember(memberId: string, input: MemberInput) {
       country_focus: input.countryFocus,
       contact_person: input.contactPerson || null,
       contact_phone: input.contactPhone || null,
+      address: input.address || null,
+      name_en: input.nameEn || null,
+      email: input.email || null,
+      line_id: input.lineId || null,
+      license_no: input.licenseNo || null,
+      license_expiry: input.licenseExpiry || null,
+      director: input.director || null,
+      sort_order: input.sortOrder ?? 0,
     })
     .eq("id", memberId);
   if (error) throw error;

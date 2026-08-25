@@ -25,7 +25,7 @@ export async function getJob(id: string) {
 
 export async function getMembers() {
   const supabase = await createClient();
-  const { data: members, error } = await supabase.from("members").select("*");
+  const { data: members, error } = await supabase.from("members").select("*").order("sort_order").order("name");
   if (error) throw error;
 
   const { data: jobs } = await supabase.from("jobs").select("id, member_id").eq("status", "open");

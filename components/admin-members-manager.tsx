@@ -23,6 +23,10 @@ import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Member = Database["public"]["Tables"]["members"]["Row"];
+
+function isExpired(expiry: string | null) {
+  return !!expiry && expiry < new Date().toISOString().slice(0, 10);
+}
 type Job = Pick<Database["public"]["Tables"]["jobs"]["Row"], "id" | "member_id" | "status">;
 
 export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs: Job[] }) {
@@ -60,10 +64,33 @@ export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs
           return (
             <Card key={m.id}>
               <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <p className="font-semibold">{m.name}</p>
-                  <span className="text-xs text-muted-foreground">{m.established_year}</span>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">
+                      {m.sort_order > 0 && (
+                        <span className="text-muted-foreground">{m.sort_order}. </span>
+                      )}
+                      {m.name}
+                    </p>
+                    {m.name_en && <p className="text-xs text-muted-foreground">{m.name_en}</p>}
+                  </div>
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    {m.established_year}
+                  </span>
                 </div>
+                {m.license_no && (
+                  <p
+                    className={`mt-1 text-xs ${
+                      isExpired(m.license_expiry) ? "font-medium text-red-600" : "text-muted-foreground"
+                    }`}
+                  >
+                    ໃບອະນຸຍາດ {m.license_no}
+                    {m.license_expiry &&
+                      (isExpired(m.license_expiry)
+                        ? ` · ໝົດອາຍຸແລ້ວ ${m.license_expiry}`
+                        : ` · ໃຊ້ໄດ້ເຖິງ ${m.license_expiry}`)}
+                  </p>
+                )}
                 {(m.contact_person || m.contact_phone) && (
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {m.contact_person}
@@ -71,6 +98,7 @@ export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs
                     {m.contact_phone}
                   </p>
                 )}
+                {m.address && <p className="mt-1 text-xs text-muted-foreground">📍 {m.address}</p>}
                 <p className="mt-1 text-sm text-muted-foreground">{m.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {m.country_focus.map((c) => (
@@ -123,6 +151,14 @@ function MemberForm({ member, onDone }: { member?: Member; onDone: () => void })
   const [selectedCountries, setSelectedCountries] = useState<Country[]>(member?.country_focus ?? []);
   const [contactPerson, setContactPerson] = useState(member?.contact_person ?? "");
   const [contactPhone, setContactPhone] = useState(member?.contact_phone ?? "");
+  const [address, setAddress] = useState(member?.address ?? "");
+  const [nameEn, setNameEn] = useState(member?.name_en ?? "");
+  const [email, setEmail] = useState(member?.email ?? "");
+  const [lineId, setLineId] = useState(member?.line_id ?? "");
+  const [licenseNo, setLicenseNo] = useState(member?.license_no ?? "");
+  const [licenseExpiry, setLicenseExpiry] = useState(member?.license_expiry ?? "");
+  const [director, setDirector] = useState(member?.director ?? "");
+  const [sortOrder, setSortOrder] = useState(String(member?.sort_order ?? 0));
 
   function toggle(c: Country) {
     setSelectedCountries((cur) => (cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
@@ -137,6 +173,14 @@ function MemberForm({ member, onDone }: { member?: Member; onDone: () => void })
         countryFocus: selectedCountries,
         contactPerson,
         contactPhone,
+        address,
+        nameEn,
+        email,
+        lineId,
+        licenseNo,
+        licenseExpiry,
+        director,
+        sortOrder: Number(sortOrder) || 0,
       };
       if (member) {
         await updateMember(member.id, payload);
@@ -155,8 +199,30 @@ function MemberForm({ member, onDone }: { member?: Member; onDone: () => void })
       </DialogHeader>
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label>ຊື່ບໍລິສັດ</Label>
+          <Label>ຊື່ບໍລິສັດ (ພາສາລາວ)</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>ຊື່ບໍລິສັດ (ພາສາອັງກິດ)</Label>
+          <Input value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <Label>ໃບອະນຸຍາດເລກທີ</Label>
+            <Input value={licenseNo} onChange={(e) => setLicenseNo(e.target.value)} placeholder="0000/ຮສສ" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>ໃຊ້ໄດ້ເຖິງ</Label>
+            <Input type="date" value={licenseExpiry} onChange={(e) => setLicenseExpiry(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>ລຳດັບ</Label>
+            <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>ຜູ້ອຳນວຍການ</Label>
+          <Input value={director} onChange={(e) => setDirector(e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
@@ -167,6 +233,25 @@ function MemberForm({ member, onDone }: { member?: Member; onDone: () => void })
             <Label>ເບີໂທຜູ້ປະສານງານ</Label>
             <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
           </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ອີເມວ</Label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>ID Line</Label>
+            <Input value={lineId} onChange={(e) => setLineId(e.target.value)} />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>ທີ່ຢູ່</Label>
+          <Textarea
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="ບ້ານ ..., ເມືອງ ..., ນະຄອນຫຼວງວຽງຈັນ"
+            rows={2}
+          />
         </div>
         <div className="space-y-1.5">
           <Label>ລາຍລະອຽດ</Label>

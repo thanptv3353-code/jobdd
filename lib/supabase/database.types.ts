@@ -20,6 +20,14 @@ export interface Database {
           established_year: number | null;
           contact_person: string | null;
           contact_phone: string | null;
+          name_en: string | null;
+          address: string | null;
+          email: string | null;
+          line_id: string | null;
+          license_no: string | null;
+          license_expiry: string | null;
+          director: string | null;
+          sort_order: number;
           created_at: string;
         };
         Insert: {
@@ -30,6 +38,14 @@ export interface Database {
           established_year?: number | null;
           contact_person?: string | null;
           contact_phone?: string | null;
+          name_en?: string | null;
+          address?: string | null;
+          email?: string | null;
+          line_id?: string | null;
+          license_no?: string | null;
+          license_expiry?: string | null;
+          director?: string | null;
+          sort_order?: number;
         };
         Update: Partial<Database["public"]["Tables"]["members"]["Insert"]>;
         Relationships: [];
