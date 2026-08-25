@@ -46,12 +46,8 @@ export default async function MembersPage() {
                   {isExpired(m.license_expiry) && ` · ໝົດອາຍຸ ${m.license_expiry}`}
                 </p>
               )}
-              {(m.contact_person || m.contact_phone) && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {m.contact_person}
-                  {m.contact_person && m.contact_phone && " · "}
-                  {m.contact_phone}
-                </p>
+              {m.contact_person && (
+                <p className="mt-1 text-xs text-muted-foreground">👤 {m.contact_person}</p>
               )}
               {m.address && <p className="mt-2 text-xs text-muted-foreground">📍 {m.address}</p>}
               {m.contact_phone && (

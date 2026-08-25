@@ -91,12 +91,11 @@ export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs
                         : ` · ໃຊ້ໄດ້ເຖິງ ${m.license_expiry}`)}
                   </p>
                 )}
-                {(m.contact_person || m.contact_phone) && (
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {m.contact_person}
-                    {m.contact_person && m.contact_phone && " · "}
-                    {m.contact_phone}
-                  </p>
+                {m.contact_person && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">👤 {m.contact_person}</p>
+                )}
+                {m.contact_phone && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">📞 {m.contact_phone}</p>
                 )}
                 {m.address && <p className="mt-1 text-xs text-muted-foreground">📍 {m.address}</p>}
                 <p className="mt-1 text-sm text-muted-foreground">{m.description}</p>
