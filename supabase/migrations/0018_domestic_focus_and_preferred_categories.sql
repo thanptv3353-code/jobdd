@@ -16,6 +16,13 @@
 -- HOW TO USE: paste into the Supabase SQL Editor (New query) and Run.
 -- Safe to re-run (idempotent).
 
+-- 0) 0003_dynamic_countries_addresses.sql converted every country column to
+--    plain text so staff could add destinations from /admin/countries — but
+--    it missed members.country_focus, which is still the frozen `country`
+--    enum. Assigning a newly added destination to a company therefore fails.
+--    Finish that conversion here; it also lets the update below run.
+alter table members alter column country_focus type text[] using country_focus::text[];
+
 -- 1) Domestic placement is licensed for all 48; do not overwrite any
 --    destination staff have already filled in by hand.
 update members
