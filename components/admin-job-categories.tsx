@@ -43,6 +43,7 @@ export function AdminJobCategories({
   const [isPending, startTransition] = useTransition();
   const [active, setActive] = useState(countries[0]?.code ?? "");
   const [editingContext, setEditingContext] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const country = countries.find((c) => c.code === active);
   const cats = categories.filter((c) => c.country === active);
@@ -74,7 +75,10 @@ export function AdminJobCategories({
           return (
             <button
               key={c.code}
-              onClick={() => setActive(c.code)}
+              onClick={() => {
+                setActive(c.code);
+                setExpanded(null);
+              }}
               className={cn(
                 "flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
                 on ? "border-transparent text-white" : "hover:bg-muted"
@@ -115,126 +119,206 @@ export function AdminJobCategories({
         {country.note && <p className="mt-2 text-sm text-muted-foreground">{country.note}</p>}
       </div>
 
-      {/* categories */}
-      <div className="mt-4 space-y-3">
-        {cats.map((ct, k) => (
-          <div
-            key={ct.id}
-            className={cn("rounded-lg border bg-white", !ct.is_open && "bg-muted/40")}
-          >
-            <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5">
-              <span
-                className="grid size-6 shrink-0 place-items-center rounded text-xs font-bold text-white"
-                style={{ backgroundColor: country.accent_color }}
-              >
-                {k + 1}
-              </span>
-              <EditableText
-                value={ct.name}
-                className="min-w-32 flex-1 font-bold"
-                onSave={(name) => run(() => updateJobCategory(ct.id, { name }))}
-              />
-              <EditableText
-                value={ct.code || "—"}
-                className="rounded bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground"
-                onSave={(code) => run(() => updateJobCategory(ct.id, { code: code === "—" ? "" : code }))}
-              />
-              <button
-                className={cn(
-                  "rounded-full px-2.5 py-1 text-xs font-semibold",
-                  ct.is_open ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700"
-                )}
-                disabled={isPending}
-                onClick={() => run(() => updateJobCategory(ct.id, { isOpen: !ct.is_open }))}
-              >
-                {ct.is_open ? "● ເປີດຮັບ" : "○ ປິດຮັບ"}
-              </button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-xs"
-                disabled={isPending || k === 0}
-                onClick={() =>
-                  run(() =>
-                    swapJobCategoryOrder(
-                      { id: ct.id, sortOrder: ct.sort_order },
-                      { id: cats[k - 1].id, sortOrder: cats[k - 1].sort_order }
-                    )
-                  )
-                }
-              >
-                ↑
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-xs"
-                disabled={isPending || k === cats.length - 1}
-                onClick={() =>
-                  run(() =>
-                    swapJobCategoryOrder(
-                      { id: ct.id, sortOrder: ct.sort_order },
-                      { id: cats[k + 1].id, sortOrder: cats[k + 1].sort_order }
-                    )
-                  )
-                }
-              >
-                ↓
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs text-red-600 hover:bg-red-50"
-                disabled={isPending}
-                onClick={() => {
-                  if (!confirm(`ລຶບໝວດ "${ct.name}" ພ້ອມວຽກຍ່ອຍທັງໝົດ?`)) return;
-                  run(() => deleteJobCategory(ct.id));
+      {/* categories — a responsive grid; the open one spans the full width
+          so its occupations read as a single vertical list at any size. */}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {cats.map((ct, k) => {
+          const catItems = itemsFor(ct.id);
+          const isOpen = expanded === ct.id;
+          return (
+            <div
+              key={ct.id}
+              className={cn(
+                "rounded-lg border bg-white transition-colors",
+                // Span every column so the occupation list reads as one
+                // vertical column regardless of how many columns fit.
+                isOpen && "col-span-full",
+                !ct.is_open && "bg-muted/40"
+              )}
+            >
+              <div
+                role="button"
+                tabIndex={0}
+                aria-expanded={isOpen}
+                onClick={() => setExpanded(isOpen ? null : ct.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setExpanded(isOpen ? null : ct.id);
+                  }
                 }}
+                className={cn(
+                  "flex w-full cursor-pointer items-center gap-2 p-3 text-left",
+                  isOpen && "border-b"
+                )}
               >
-                ລຶບ
-              </Button>
-            </div>
-
-            <div className={cn("flex flex-wrap gap-1.5 p-3", !ct.is_open && "opacity-50")}>
-              {itemsFor(ct.id).map((j) => (
                 <span
-                  key={j.id}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border py-1 pl-3 pr-1.5 text-sm",
-                    j.needs_review ? "border-amber-300 bg-amber-50 text-amber-800" : "bg-muted"
-                  )}
+                  className="grid size-6 shrink-0 place-items-center rounded text-xs font-bold text-white"
+                  style={{ backgroundColor: country.accent_color }}
                 >
-                  <EditableText
-                    value={j.name}
-                    onSave={(name) => run(() => updateJobCategoryItem(j.id, { name }))}
-                  />
-                  <button
-                    title="ໝາຍວ່າຕ້ອງກວດເງື່ອນໄຂ"
-                    className="px-1 text-muted-foreground hover:text-amber-700"
-                    disabled={isPending}
-                    onClick={() => run(() => updateJobCategoryItem(j.id, { needsReview: !j.needs_review }))}
-                  >
-                    ⚑
-                  </button>
-                  <button
-                    title="ລຶບ"
-                    className="px-1 text-muted-foreground hover:text-red-600"
-                    disabled={isPending}
-                    onClick={() => run(() => deleteJobCategoryItem(j.id))}
-                  >
-                    ×
-                  </button>
+                  {k + 1}
                 </span>
-              ))}
-              <AddInline
-                label="+ ວຽກຍ່ອຍ"
-                placeholder="ຊື່ວຽກຍ່ອຍ"
-                onAdd={(name) => run(() => addJobCategoryItem(ct.id, name))}
-              />
-            </div>
-          </div>
-        ))}
 
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">{ct.name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {catItems.length} ວຽກຍ່ອຍ
+                    {ct.code && ` · ${ct.code}`}
+                  </span>
+                </span>
+
+                <button
+                  className={cn(
+                    "shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold",
+                    ct.is_open ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700"
+                  )}
+                  disabled={isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    run(() => updateJobCategory(ct.id, { isOpen: !ct.is_open }));
+                  }}
+                >
+                  {ct.is_open ? "ເປີດ" : "ປິດ"}
+                </button>
+
+                <span className="shrink-0 text-muted-foreground">{isOpen ? "▲" : "▼"}</span>
+              </div>
+
+              {isOpen && (
+                <div className="p-3">
+                  {/* category-level controls, kept out of the collapsed card */}
+                  <div className="flex flex-wrap items-center gap-2 pb-3">
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-xs text-muted-foreground">ຊື່ໝວດ</Label>
+                      <EditableText
+                        value={ct.name}
+                        className="font-semibold"
+                        onSave={(name) => run(() => updateJobCategory(ct.id, { name }))}
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-xs text-muted-foreground">ລະຫັດ</Label>
+                      <EditableText
+                        value={ct.code || "—"}
+                        className="rounded bg-muted px-2 py-0.5 font-mono text-xs"
+                        onSave={(code) =>
+                          run(() => updateJobCategory(ct.id, { code: code === "—" ? "" : code }))
+                        }
+                      />
+                    </div>
+                    <div className="ml-auto flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        disabled={isPending || k === 0}
+                        onClick={() =>
+                          run(() =>
+                            swapJobCategoryOrder(
+                              { id: ct.id, sortOrder: ct.sort_order },
+                              { id: cats[k - 1].id, sortOrder: cats[k - 1].sort_order }
+                            )
+                          )
+                        }
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        disabled={isPending || k === cats.length - 1}
+                        onClick={() =>
+                          run(() =>
+                            swapJobCategoryOrder(
+                              { id: ct.id, sortOrder: ct.sort_order },
+                              { id: cats[k + 1].id, sortOrder: cats[k + 1].sort_order }
+                            )
+                          )
+                        }
+                      >
+                        ↓
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs text-red-600 hover:bg-red-50"
+                        disabled={isPending}
+                        onClick={() => {
+                          if (!confirm(`ລຶບໝວດ "${ct.name}" ພ້ອມວຽກຍ່ອຍທັງໝົດ?`)) return;
+                          setExpanded(null);
+                          run(() => deleteJobCategory(ct.id));
+                        }}
+                      >
+                        ລຶບໝວດ
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* occupations, one per row */}
+                  <ul className="divide-y rounded-md border">
+                    {catItems.map((j, n) => (
+                      <li
+                        key={j.id}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2",
+                          j.needs_review && "bg-amber-50"
+                        )}
+                      >
+                        <span className="w-6 shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {n + 1}.
+                        </span>
+                        <EditableText
+                          value={j.name}
+                          className={cn("min-w-0 flex-1", j.needs_review && "text-amber-800")}
+                          onSave={(name) => run(() => updateJobCategoryItem(j.id, { name }))}
+                        />
+                        <button
+                          title="ໝາຍວ່າຕ້ອງກວດເງື່ອນໄຂ"
+                          className={cn(
+                            "shrink-0 px-1.5 text-sm",
+                            j.needs_review ? "text-amber-700" : "text-muted-foreground hover:text-amber-700"
+                          )}
+                          disabled={isPending}
+                          onClick={() =>
+                            run(() => updateJobCategoryItem(j.id, { needsReview: !j.needs_review }))
+                          }
+                        >
+                          ⚑
+                        </button>
+                        <button
+                          title="ລຶບ"
+                          className="shrink-0 px-1.5 text-muted-foreground hover:text-red-600"
+                          disabled={isPending}
+                          onClick={() => run(() => deleteJobCategoryItem(j.id))}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                    {catItems.length === 0 && (
+                      <li className="px-3 py-4 text-center text-sm text-muted-foreground">
+                        ຍັງບໍ່ມີວຽກຍ່ອຍ
+                      </li>
+                    )}
+                  </ul>
+
+                  <div className="mt-3">
+                    <AddInline
+                      label="+ ວຽກຍ່ອຍ"
+                      placeholder="ຊື່ວຽກຍ່ອຍ"
+                      block
+                      onAdd={(name) => run(() => addJobCategoryItem(ct.id, name))}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-3">
         <AddInline
           label="+ ເພີ່ມໝວດວຽກໃຫຍ່"
           placeholder="ຊື່ໝວດວຽກ"
