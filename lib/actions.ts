@@ -512,6 +512,126 @@ export async function deleteMember(memberId: string) {
   revalidatePath("/members");
 }
 
+// ---------- Per-country job categories (staff) ----------
+
+async function revalidateCategories() {
+  revalidatePath("/admin/job-categories");
+  revalidatePath("/jobs");
+}
+
+export async function updateCountryContext(
+  code: string,
+  input: { route: string; note: string; accentColor: string }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("countries")
+    .update({
+      route: input.route || null,
+      note: input.note || null,
+      accent_color: input.accentColor || "#475569",
+    })
+    .eq("code", code);
+  if (error) throw error;
+  await revalidateCategories();
+}
+
+export async function addJobCategory(country: string, name: string) {
+  const supabase = await createClient();
+  // Append to the end of this country's list.
+  const { data: last } = await supabase
+    .from("job_categories")
+    .select("sort_order")
+    .eq("country", country)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("job_categories")
+    .insert({ country, name, sort_order: (last?.sort_order ?? 0) + 1 });
+  if (error) return { error: error.message };
+  await revalidateCategories();
+  return {};
+}
+
+export async function updateJobCategory(
+  id: string,
+  input: { name?: string; code?: string; isOpen?: boolean; sortOrder?: number }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("job_categories")
+    .update({
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.code !== undefined && { code: input.code }),
+      ...(input.isOpen !== undefined && { is_open: input.isOpen }),
+      ...(input.sortOrder !== undefined && { sort_order: input.sortOrder }),
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  await revalidateCategories();
+  return {};
+}
+
+export async function deleteJobCategory(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("job_categories").delete().eq("id", id);
+  if (error) throw error;
+  await revalidateCategories();
+}
+
+/** Swap two categories' sort_order so staff can reorder the list. */
+export async function swapJobCategoryOrder(a: { id: string; sortOrder: number }, b: { id: string; sortOrder: number }) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("job_categories").upsert([
+    { id: a.id, sort_order: b.sortOrder },
+    { id: b.id, sort_order: a.sortOrder },
+  ] as never);
+  if (error) throw error;
+  await revalidateCategories();
+}
+
+export async function addJobCategoryItem(categoryId: string, name: string) {
+  const supabase = await createClient();
+  const { data: last } = await supabase
+    .from("job_category_items")
+    .select("sort_order")
+    .eq("category_id", categoryId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("job_category_items")
+    .insert({ category_id: categoryId, name, sort_order: (last?.sort_order ?? 0) + 1 });
+  if (error) return { error: error.message };
+  await revalidateCategories();
+  return {};
+}
+
+export async function updateJobCategoryItem(
+  id: string,
+  input: { name?: string; needsReview?: boolean }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("job_category_items")
+    .update({
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.needsReview !== undefined && { needs_review: input.needsReview }),
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  await revalidateCategories();
+  return {};
+}
+
+export async function deleteJobCategoryItem(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("job_category_items").delete().eq("id", id);
+  if (error) throw error;
+  await revalidateCategories();
+}
+
 // ---------- Countries + per-country document requirements (staff) ----------
 
 type CountryInput = {

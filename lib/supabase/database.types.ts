@@ -264,6 +264,9 @@ export interface Database {
           min_age: number;
           max_age: number;
           sort_order: number;
+          route: string | null;
+          note: string | null;
+          accent_color: string;
           created_at: string;
         };
         Insert: {
@@ -272,9 +275,68 @@ export interface Database {
           min_age?: number;
           max_age?: number;
           sort_order?: number;
+          route?: string | null;
+          note?: string | null;
+          accent_color?: string;
         };
         Update: Partial<Database["public"]["Tables"]["countries"]["Insert"]>;
         Relationships: [];
+      };
+      job_categories: {
+        Row: {
+          id: string;
+          country: string;
+          name: string;
+          code: string;
+          is_open: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          country: string;
+          name: string;
+          code?: string;
+          is_open?: boolean;
+          sort_order?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["job_categories"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "job_categories_country_fkey";
+            columns: ["country"];
+            isOneToOne: false;
+            referencedRelation: "countries";
+            referencedColumns: ["code"];
+          },
+        ];
+      };
+      job_category_items: {
+        Row: {
+          id: string;
+          category_id: string;
+          name: string;
+          needs_review: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          category_id: string;
+          name: string;
+          needs_review?: boolean;
+          sort_order?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["job_category_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "job_category_items_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "job_categories";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       staff: {
         Row: {
