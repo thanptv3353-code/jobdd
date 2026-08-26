@@ -62,7 +62,7 @@ export function AddressGroup({
       <Input value={village} onChange={(e) => onVillage(e.target.value)} placeholder="ບ້ານ" />
 
       <Select
-        value={district || undefined}
+        value={district}
         onValueChange={onDistrict}
         disabled={!provinceCode}
       >
@@ -80,7 +80,7 @@ export function AddressGroup({
       </Select>
 
       <Select
-        value={province || undefined}
+        value={province}
         onValueChange={(v) => {
           onProvince(v);
           onDistrict(""); // districts belong to a province
