@@ -38,6 +38,7 @@ export function AdminStats({
           label={(k) => AVAILABILITY_LABEL[k as AvailabilityStatus] ?? k}
         />
         <Chart title="ປະເທດທີ່ສົນໃຈ" data={stats.by_country_interest} label={countryLabel} />
+        <Chart title="ປະເພດວຽກທີ່ສົນໃຈ" data={stats.by_category_interest ?? []} />
         <Chart
           title="ຂັ້ນຕອນໃບສະໝັກ"
           data={stats.by_stage}

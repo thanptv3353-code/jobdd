@@ -20,6 +20,7 @@ export interface ApplicantStats {
   by_district: DistrictBucket[];
   by_availability: StatBucket[];
   by_country_interest: StatBucket[];
+  by_category_interest: StatBucket[];
   by_stage: StatBucket[];
 }
 
@@ -117,6 +118,7 @@ export interface Database {
           cur_district: string;
           cur_province: string;
           preferred_countries: Country[];
+          preferred_categories: string[];
           availability_status: AvailabilityStatus;
           status_updated_at: string;
           status_updated_by: string;
@@ -137,6 +139,7 @@ export interface Database {
           cur_district?: string;
           cur_province?: string;
           preferred_countries?: Country[];
+          preferred_categories?: string[];
           custom_fields?: Record<string, string | number | boolean | string[]>;
         };
         Update: Partial<Database["public"]["Tables"]["worker_profiles"]["Insert"]> & {

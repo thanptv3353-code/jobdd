@@ -34,6 +34,7 @@ export async function registerWorker(
     phone: string;
     dob: string;
     preferredCountries: Country[];
+    preferredCategories?: string[];
     customFields?: Record<string, string | number | boolean | string[]>;
   } & AddressInput
 ) {
@@ -55,6 +56,7 @@ export async function registerWorker(
         cur_district: input.curDistrict,
         cur_province: input.curProvince,
         preferred_countries: input.preferredCountries,
+        preferred_categories: input.preferredCategories ?? [],
         custom_fields: input.customFields ?? {},
       },
       { onConflict: "id", ignoreDuplicates: true }

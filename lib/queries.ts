@@ -80,3 +80,15 @@ export async function getFormFields() {
   if (error) throw error;
   return data ?? [];
 }
+
+/** Categories the association currently opens, for the register form and job filters. */
+export async function getOpenJobCategories() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("job_categories")
+    .select("*")
+    .eq("is_open", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data;
+}

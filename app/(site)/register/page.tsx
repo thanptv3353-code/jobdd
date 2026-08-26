@@ -1,7 +1,7 @@
 import { RegisterForm } from "@/components/register-form";
-import { getFormFields } from "@/lib/queries";
+import { getFormFields, getOpenJobCategories } from "@/lib/queries";
 
 export default async function RegisterPage() {
-  const fields = await getFormFields();
-  return <RegisterForm fields={fields} />;
+  const [fields, categories] = await Promise.all([getFormFields(), getOpenJobCategories()]);
+  return <RegisterForm fields={fields} categories={categories} />;
 }

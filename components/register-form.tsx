@@ -16,12 +16,19 @@ import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/database.types";
 
 type FormField = Database["public"]["Tables"]["form_fields"]["Row"];
+type JobCategory = Database["public"]["Tables"]["job_categories"]["Row"];
 
 function Req({ required }: { required: boolean }) {
   return required ? <span className="text-red-500"> *</span> : null;
 }
 
-export function RegisterForm({ fields }: { fields: FormField[] }) {
+export function RegisterForm({
+  fields,
+  categories,
+}: {
+  fields: FormField[];
+  categories: JobCategory[];
+}) {
   const router = useRouter();
   const { countries, label } = useCountries();
   const [isPending, startTransition] = useTransition();
@@ -48,13 +55,30 @@ export function RegisterForm({ fields }: { fields: FormField[] }) {
   const [curDistrict, setCurDistrict] = useState("");
   const [curProvince, setCurProvince] = useState("");
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [customValues, setCustomValues] = useState<Record<string, CustomFieldValue>>({});
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function toggleCountry(c: string) {
-    setSelectedCountries((cur) => (cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));
+    setSelectedCountries((cur) => {
+      const next = cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c];
+      // Categories belong to a country; drop any whose country was removed.
+      setSelectedCategories((cats) =>
+        cats.filter((id) => {
+          const cat = categories.find((x) => x.id === id);
+          return cat ? next.includes(cat.country) : false;
+        })
+      );
+      return next;
+    });
+  }
+
+  function toggleCategory(id: string) {
+    setSelectedCategories((cur) =>
+      cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
+    );
   }
 
   function addPendingFile(docType: string) {
@@ -78,6 +102,7 @@ export function RegisterForm({ fields }: { fields: FormField[] }) {
           curDistrict,
           curProvince,
           preferredCountries: selectedCountries,
+          preferredCategories: selectedCategories,
           customFields: customValues,
         });
         for (const f of pendingFiles) {
@@ -231,6 +256,41 @@ export function RegisterForm({ fields }: { fields: FormField[] }) {
               ))}
             </div>
           </div>
+
+          {selectedCountries.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>ສົນໃຈວຽກປະເພດໃດ? (ບໍ່ບັງຄັບ)</Label>
+              <p className="text-xs text-muted-foreground">
+                ເລືອກໄວ້ເພື່ອໃຫ້ພວກເຮົາແຈ້ງເຕືອນທ່ານເມື່ອມີວຽກຕົງກັບທີ່ຕ້ອງການ
+              </p>
+              {selectedCountries.map((code) => {
+                const cats = categories.filter((c) => c.country === code);
+                if (cats.length === 0) return null;
+                return (
+                  <div key={code} className="pt-1">
+                    <p className="text-xs font-medium text-muted-foreground">{label(code)}</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {cats.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => toggleCategory(c.id)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                            selectedCategories.includes(c.id)
+                              ? "border-emerald-600 bg-emerald-50 text-emerald-800"
+                              : "hover:bg-muted"
+                          )}
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {customFields.map((f) => (
             <DynamicField
