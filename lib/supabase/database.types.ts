@@ -8,6 +8,21 @@ export type ApplicationStage =
   | "contract_signed"
   | "rejected";
 
+export type StatBucket = { key: string; count: number };
+export type DistrictBucket = StatBucket & { province: string | null };
+
+export interface ApplicantStats {
+  total_workers: number;
+  total_applications: number;
+  by_gender: StatBucket[];
+  by_age_band: StatBucket[];
+  by_province: StatBucket[];
+  by_district: DistrictBucket[];
+  by_availability: StatBucket[];
+  by_country_interest: StatBucket[];
+  by_stage: StatBucket[];
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -499,6 +514,10 @@ export interface Database {
       is_staff: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      get_applicant_stats: {
+        Args: Record<string, never>;
+        Returns: ApplicantStats;
       };
       is_super_admin: {
         Args: Record<string, never>;
