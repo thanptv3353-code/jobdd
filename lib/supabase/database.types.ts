@@ -356,6 +356,38 @@ export interface Database {
           },
         ];
       };
+      provinces: {
+        Row: { code: string; name: string; sort_order: number };
+        Insert: { code: string; name: string; sort_order?: number };
+        Update: Partial<Database["public"]["Tables"]["provinces"]["Insert"]>;
+        Relationships: [];
+      };
+      districts: {
+        Row: {
+          code: string;
+          province_code: string;
+          name: string;
+          name_en: string;
+          sort_order: number;
+        };
+        Insert: {
+          code: string;
+          province_code: string;
+          name: string;
+          name_en?: string;
+          sort_order?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["districts"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "districts_province_code_fkey";
+            columns: ["province_code"];
+            isOneToOne: false;
+            referencedRelation: "provinces";
+            referencedColumns: ["code"];
+          },
+        ];
+      };
       staff: {
         Row: {
           id: string;

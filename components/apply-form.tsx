@@ -22,7 +22,20 @@ type Requirement = Database["public"]["Tables"]["country_requirements"]["Row"];
 
 const STEPS = ["ຂໍ້ມູນສ່ວນຕົວ", "ເອກະສານ", "ກວດສອບ ແລະ ສົ່ງ"];
 
-export function ApplyForm({ job, requirements }: { job: Job; requirements: Requirement[] }) {
+type Province = Database["public"]["Tables"]["provinces"]["Row"];
+type District = Database["public"]["Tables"]["districts"]["Row"];
+
+export function ApplyForm({
+  job,
+  requirements,
+  provinces,
+  districts,
+}: {
+  job: Job;
+  requirements: Requirement[];
+  provinces: Province[];
+  districts: District[];
+}) {
   const router = useRouter();
   const { label, get } = useCountries();
   const [isPending, startTransition] = useTransition();
@@ -172,6 +185,8 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
                 onVillage={setPermVillage}
                 onDistrict={setPermDistrict}
                 onProvince={setPermProvince}
+                provinces={provinces}
+                districts={districts}
               />
               <AddressGroup
                 title="ທີ່ຢູ່ປັດຈຸບັນ"
@@ -181,6 +196,8 @@ export function ApplyForm({ job, requirements }: { job: Job; requirements: Requi
                 onVillage={setCurVillage}
                 onDistrict={setCurDistrict}
                 onProvince={setCurProvince}
+                provinces={provinces}
+                districts={districts}
               />
 
               {dob && !eligibility.eligible && (

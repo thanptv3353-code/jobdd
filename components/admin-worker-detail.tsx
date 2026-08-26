@@ -66,6 +66,8 @@ export function AdminWorkerDetail({
   files,
   formFields,
   openJobs,
+  provinces,
+  districts,
 }: {
   worker: Worker;
   applications: Application[];
@@ -74,6 +76,8 @@ export function AdminWorkerDetail({
   files: WorkerFile[];
   formFields: { field_key: string; label: string }[];
   openJobs: OpenJob[];
+  provinces: Database["public"]["Tables"]["provinces"]["Row"][];
+  districts: Database["public"]["Tables"]["districts"]["Row"][];
 }) {
   const router = useRouter();
   const { label } = useCountries();
@@ -374,7 +378,13 @@ export function AdminWorkerDetail({
         </CardContent>
       </Card>
 
-      <ProfileEditDialog worker={worker} open={editingProfile} onOpenChange={setEditingProfile} />
+      <ProfileEditDialog
+        worker={worker}
+        open={editingProfile}
+        onOpenChange={setEditingProfile}
+        provinces={provinces}
+        districts={districts}
+      />
       <ApplicationEditDialog
         application={editingApplication}
         open={!!editingApplication}
@@ -394,10 +404,14 @@ function ProfileEditDialog({
   worker,
   open,
   onOpenChange,
+  provinces,
+  districts,
 }: {
   worker: Worker;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  provinces: Database["public"]["Tables"]["provinces"]["Row"][];
+  districts: Database["public"]["Tables"]["districts"]["Row"][];
 }) {
   const router = useRouter();
   const { countries, label } = useCountries();
@@ -483,6 +497,8 @@ function ProfileEditDialog({
             onVillage={setPermVillage}
             onDistrict={setPermDistrict}
             onProvince={setPermProvince}
+            provinces={provinces}
+            districts={districts}
           />
           <AddressGroup
             title="ທີ່ຢູ່ປັດຈຸບັນ"
@@ -492,6 +508,8 @@ function ProfileEditDialog({
             onVillage={setCurVillage}
             onDistrict={setCurDistrict}
             onProvince={setCurProvince}
+            provinces={provinces}
+            districts={districts}
           />
           <div className="space-y-1.5">
             <Label>ສົນໃຈໄປປະເທດໃດແດ່</Label>

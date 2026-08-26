@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
 import { AdminWorkerDetail } from "@/components/admin-worker-detail";
 import { createClient } from "@/lib/supabase/server";
+import { getLaoAdminDivisions } from "@/lib/queries";
 
 export default async function AdminWorkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
+
+  const divisions = await getLaoAdminDivisions();
 
   const [
     { data: worker },
@@ -51,6 +54,8 @@ export default async function AdminWorkerDetailPage({ params }: { params: Promis
       files={files ?? []}
       formFields={formFields ?? []}
       openJobs={openJobs ?? []}
+      provinces={divisions.provinces}
+      districts={divisions.districts}
     />
   );
 }

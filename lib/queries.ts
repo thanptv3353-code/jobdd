@@ -92,3 +92,13 @@ export async function getOpenJobCategories() {
   if (error) throw error;
   return data;
 }
+
+/** The 18 provinces and 148 districts, for the address pickers. */
+export async function getLaoAdminDivisions() {
+  const supabase = await createClient();
+  const [{ data: provinces }, { data: districts }] = await Promise.all([
+    supabase.from("provinces").select("*").order("sort_order", { ascending: true }),
+    supabase.from("districts").select("*").order("sort_order", { ascending: true }),
+  ]);
+  return { provinces: provinces ?? [], districts: districts ?? [] };
+}

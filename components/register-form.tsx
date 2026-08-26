@@ -17,6 +17,8 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type FormField = Database["public"]["Tables"]["form_fields"]["Row"];
 type JobCategory = Database["public"]["Tables"]["job_categories"]["Row"];
+type Province = Database["public"]["Tables"]["provinces"]["Row"];
+type District = Database["public"]["Tables"]["districts"]["Row"];
 
 function Req({ required }: { required: boolean }) {
   return required ? <span className="text-red-500"> *</span> : null;
@@ -25,9 +27,13 @@ function Req({ required }: { required: boolean }) {
 export function RegisterForm({
   fields,
   categories,
+  provinces,
+  districts,
 }: {
   fields: FormField[];
   categories: JobCategory[];
+  provinces: Province[];
+  districts: District[];
 }) {
   const router = useRouter();
   const { countries, label } = useCountries();
@@ -222,6 +228,8 @@ export function RegisterForm({
             onVillage={setPermVillage}
             onDistrict={setPermDistrict}
             onProvince={setPermProvince}
+                provinces={provinces}
+                districts={districts}
           />
           <AddressGroup
             title={builtin.label("_cur_address", "ທີ່ຢູ່ປັດຈຸບັນ")}
@@ -231,6 +239,8 @@ export function RegisterForm({
             onVillage={setCurVillage}
             onDistrict={setCurDistrict}
             onProvince={setCurProvince}
+                provinces={provinces}
+                districts={districts}
           />
 
           <div className="space-y-1.5">
