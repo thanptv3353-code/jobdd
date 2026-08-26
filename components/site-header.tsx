@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 
 const NAV = [
   { href: "/jobs", label: "ຫາວຽກ" },
+  { href: "/job-categories", label: "ປະເພດວຽກ" },
   { href: "/members", label: "ບໍລິສັດສະມາຊິກ" },
   { href: "/about", label: "ກ່ຽວກັບພວກເຮົາ" },
   { href: "/dashboard", label: "ໃບສະໝັກຂອງຂ້ອຍ" },
