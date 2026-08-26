@@ -132,17 +132,56 @@ async function getCurrentStaff(supabase: Awaited<ReturnType<typeof createClient>
   return data;
 }
 
+/**
+ * Who is acting: a Job DD staff member, or a signed-in member company.
+ * Companies are recorded with their own name so admin can always see which
+ * company interviewed or hired an applicant.
+ */
+async function getCurrentActor(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const staff = await getCurrentStaff(supabase);
+  if (staff) {
+    return { actorType: "staff" as const, staffId: staff.id, name: staff.name, memberId: null };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: mu } = await supabase
+    .from("member_users")
+    .select("member_id, name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!mu) return null;
+
+  const { data: company } = await supabase
+    .from("members")
+    .select("name")
+    .eq("id", mu.member_id)
+    .maybeSingle();
+
+  return {
+    actorType: "member" as const,
+    staffId: null,
+    name: company?.name || mu.name || "ບໍລິສັດສະມາຊິກ",
+    memberId: mu.member_id,
+  };
+}
+
 async function logApplicationEvent(
   supabase: Awaited<ReturnType<typeof createClient>>,
   applicationId: string,
   action: string,
   detail?: string
 ) {
-  const staff = await getCurrentStaff(supabase);
+  const actor = await getCurrentActor(supabase);
   await supabase.from("application_events").insert({
     application_id: applicationId,
-    staff_id: staff?.id ?? null,
-    staff_name: staff?.name || "ລະບົບ",
+    staff_id: actor?.staffId ?? null,
+    staff_name: actor?.name || "ລະບົບ",
+    actor_type: actor?.actorType ?? "staff",
+    member_id: actor?.memberId ?? null,
     action,
     detail: detail ?? null,
   });
@@ -775,6 +814,152 @@ export async function signUpStaff(email: string, password: string) {
 export async function signOutStaff() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+}
+
+// ---------- Member portal (company accounts) ----------
+
+export async function signInMember(email: string, password: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function signUpMember(email: string, password: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signUp({ email, password });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function signOutMember() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+}
+
+/** The company the signed-in user belongs to, or null. */
+export async function getMyMemberId() {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("my_member_id");
+  return data ?? null;
+}
+
+function revalidateMember() {
+  revalidatePath("/member");
+  revalidatePath("/member/jobs");
+  revalidatePath("/member/applicants");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/jobs");
+}
+
+type MemberJobInput = {
+  title: string;
+  country: Country;
+  category: string;
+  salaryRange: string;
+  description: string;
+  quota: number;
+  status: "open" | "closed";
+};
+
+export async function addMemberJob(input: MemberJobInput) {
+  const supabase = await createClient();
+  const memberId = await getMyMemberId();
+  if (!memberId) return { error: "ບັນຊີນີ້ບໍ່ໄດ້ຜູກກັບບໍລິສັດສະມາຊິກ" };
+
+  const { error } = await supabase.from("jobs").insert({
+    member_id: memberId,
+    title: input.title,
+    country: input.country,
+    category: input.category,
+    salary_range: input.salaryRange,
+    description: input.description,
+    quota: input.quota,
+    status: input.status,
+  });
+  if (error) return { error: error.message };
+  revalidateMember();
+  return { error: null };
+}
+
+export async function updateMemberJob(jobId: string, input: MemberJobInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("jobs")
+    .update({
+      title: input.title,
+      country: input.country,
+      category: input.category,
+      salary_range: input.salaryRange,
+      description: input.description,
+      quota: input.quota,
+      status: input.status,
+    })
+    .eq("id", jobId);
+  if (error) return { error: error.message };
+  revalidateMember();
+  return { error: null };
+}
+
+export async function deleteMemberJob(jobId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("jobs").delete().eq("id", jobId);
+  if (error) return { error: error.message };
+  revalidateMember();
+  return { error: null };
+}
+
+/**
+ * Stage changes and interview scheduling from the company side. RLS confines
+ * these to applications made to the company's own jobs, and the audit log
+ * records the company as the actor.
+ */
+export async function memberSetApplicationStage(applicationId: string, stage: ApplicationStage) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("applications").update({ stage }).eq("id", applicationId);
+  if (error) return { error: error.message };
+  await logApplicationEvent(supabase, applicationId, stage);
+  revalidateMember();
+  return { error: null };
+}
+
+export async function memberScheduleInterview(applicationId: string, interviewAt: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("applications")
+    .update({ stage: "interview", interview_at: interviewAt })
+    .eq("id", applicationId);
+  if (error) return { error: error.message };
+  await logApplicationEvent(
+    supabase,
+    applicationId,
+    "interview",
+    new Date(interviewAt).toLocaleString("lo-LA")
+  );
+  revalidateMember();
+  return { error: null };
+}
+
+// ---------- Company account management (staff) ----------
+
+export async function addMemberAccount(input: { email: string; memberId: string; name: string }) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("add_member_user_by_email", {
+    p_email: input.email,
+    p_member_id: input.memberId,
+    p_name: input.name,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/admin/members");
+  return { error: null };
+}
+
+export async function removeMemberAccount(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_member_user", { p_id: id });
+  if (error) return { error: error.message };
+  revalidatePath("/admin/members");
+  return { error: null };
 }
 
 // ---------- Staff management (super admin only) ----------

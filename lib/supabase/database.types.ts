@@ -372,6 +372,33 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["staff"]["Insert"]>;
         Relationships: [];
       };
+      member_users: {
+        Row: {
+          id: string;
+          user_id: string;
+          member_id: string;
+          name: string;
+          email: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          member_id: string;
+          name?: string;
+          email?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["member_users"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "member_users_member_id_fkey";
+            columns: ["member_id"];
+            isOneToOne: false;
+            referencedRelation: "members";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       application_events: {
         Row: {
           id: string;
@@ -380,6 +407,8 @@ export interface Database {
           staff_name: string;
           action: string;
           detail: string | null;
+          actor_type: "staff" | "member";
+          member_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -389,6 +418,8 @@ export interface Database {
           staff_name: string;
           action: string;
           detail?: string | null;
+          actor_type?: "staff" | "member";
+          member_id?: string | null;
         };
         Update: never;
         Relationships: [
@@ -529,6 +560,22 @@ export interface Database {
       };
       remove_staff: {
         Args: { p_staff_id: string };
+        Returns: undefined;
+      };
+      is_member_user: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      my_member_id: {
+        Args: Record<string, never>;
+        Returns: string | null;
+      };
+      add_member_user_by_email: {
+        Args: { p_email: string; p_member_id: string; p_name: string };
+        Returns: undefined;
+      };
+      remove_member_user: {
+        Args: { p_id: string };
         Returns: undefined;
       };
     };

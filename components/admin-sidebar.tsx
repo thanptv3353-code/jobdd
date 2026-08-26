@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/workers", label: "ຜູ້ຫາວຽກ", icon: "👥" },
   { href: "/admin/applicants", label: "ລາຍຊື່ຜູ້ສະໝັກ", icon: "📋" },
   { href: "/admin/stats", label: "ສະຖິຕິ", icon: "📈" },
+  { href: "/admin/activity", label: "ການເຄື່ອນໄຫວ", icon: "🕘" },
   { href: "/admin/jobs", label: "ຕຳແໜ່ງວຽກ", icon: "💼" },
   { href: "/admin/members", label: "ບໍລິສັດສະມາຊິກ", icon: "🏢" },
   { href: "/admin/countries", label: "ປະເທດປາຍທາງ", icon: "🌏" },

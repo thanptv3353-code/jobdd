@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCountries } from "@/components/countries-provider";
-import { addMember, deleteMember, updateMember } from "@/lib/actions";
+import { addMember, addMemberAccount, deleteMember, removeMemberAccount, updateMember } from "@/lib/actions";
 import type { Country } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/database.types";
@@ -28,13 +28,23 @@ function isExpired(expiry: string | null) {
   return !!expiry && expiry < new Date().toISOString().slice(0, 10);
 }
 type Job = Pick<Database["public"]["Tables"]["jobs"]["Row"], "id" | "member_id" | "status">;
+type Account = Database["public"]["Tables"]["member_users"]["Row"];
 
-export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs: Job[] }) {
+export function AdminMembersManager({
+  members,
+  jobs,
+  accounts,
+}: {
+  members: Member[];
+  jobs: Job[];
+  accounts: Account[];
+}) {
   const router = useRouter();
   const { label } = useCountries();
   const [isPending, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [managingAccounts, setManagingAccounts] = useState<Member | null>(null);
 
   function handleDelete(member: Member) {
     if (!confirm(`ລຶບບໍລິສັດ "${member.name}" ຖາວອນ? (ຕຳແໜ່ງວຽກທີ່ກ່ຽວຂ້ອງຈະຖືກລຶບນຳ)`)) return;
@@ -106,9 +116,24 @@ export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs
                     </Badge>
                   ))}
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-sm font-medium text-emerald-700">{count} ຕຳແໜ່ງເປີດຮັບ</p>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-emerald-700">
+                    {count} ຕຳແໜ່ງເປີດຮັບ
+                    {accounts.some((a) => a.member_id === m.id) && (
+                      <span className="ml-2 rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800">
+                        🔑 {accounts.filter((a) => a.member_id === m.id).length} ບັນຊີ
+                      </span>
+                    )}
+                  </p>
                   <div className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => setManagingAccounts(m)}
+                    >
+                      ບັນຊີເຂົ້າລະບົບ
+                    </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingMember(m)}>
                       ແກ້ໄຂ
                     </Button>
@@ -136,7 +161,110 @@ export function AdminMembersManager({ members, jobs }: { members: Member[]; jobs
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!managingAccounts} onOpenChange={(open) => !open && setManagingAccounts(null)}>
+        <DialogContent>
+          {managingAccounts && (
+            <AccountsPanel
+              member={managingAccounts}
+              accounts={accounts.filter((a) => a.member_id === managingAccounts.id)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+/** Grant or revoke a company's own login to the member portal. */
+function AccountsPanel({ member, accounts }: { member: Member; accounts: Account[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  function handleAdd() {
+    setError(null);
+    startTransition(async () => {
+      const { error } = await addMemberAccount({ email, memberId: member.id, name });
+      if (error) {
+        setError(error);
+        return;
+      }
+      setEmail("");
+      setName("");
+      router.refresh();
+    });
+  }
+
+  function handleRemove(a: Account) {
+    if (!confirm(`ຖອນສິດເຂົ້າລະບົບຂອງ ${a.email}?`)) return;
+    startTransition(async () => {
+      const { error } = await removeMemberAccount(a.id);
+      if (error) alert(error);
+      router.refresh();
+    });
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>ບັນຊີເຂົ້າລະບົບ — {member.name}</DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        {accounts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">ຍັງບໍ່ມີບັນຊີ</p>
+        ) : (
+          <ul className="space-y-2">
+            {accounts.map((a) => (
+              <li key={a.id} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{a.email}</p>
+                  {a.name && <p className="truncate text-xs text-muted-foreground">{a.name}</p>}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-auto h-7 text-xs text-red-600 hover:bg-red-50"
+                  disabled={isPending}
+                  onClick={() => handleRemove(a)}
+                >
+                  ຖອນສິດ
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="space-y-3 border-t pt-4">
+          <p className="text-sm font-medium">ເພີ່ມບັນຊີ</p>
+          <p className="text-xs text-muted-foreground">
+            ໃຫ້ບໍລິສັດສະໝັກບັນຊີທີ່ໜ້າ /member/login ກ່ອນ ແລ້ວຈຶ່ງໃສ່ອີເມວນັ້ນຢູ່ນີ້
+          </p>
+          <div className="space-y-1.5">
+            <Label>ອີເມວ</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>ຊື່ຜູ້ໃຊ້ (ບໍ່ບັງຄັບ)</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button
+          className="bg-emerald-600 hover:bg-emerald-700"
+          disabled={!email || isPending}
+          onClick={handleAdd}
+        >
+          ເພີ່ມບັນຊີ
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
