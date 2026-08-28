@@ -24,6 +24,7 @@ export function AddressGroup({
   onProvince,
   provinces = [],
   districts = [],
+  required = false,
 }: {
   title: string;
   village: string;
@@ -34,6 +35,7 @@ export function AddressGroup({
   onProvince: (v: string) => void;
   provinces?: Province[];
   districts?: District[];
+  required?: boolean;
 }) {
   const provinceCode = provinces.find((p) => p.name === province)?.code;
   const districtOptions = useMemo(
@@ -49,7 +51,7 @@ export function AddressGroup({
   // Fall back to free text if the divisions have not been imported yet.
   if (provinces.length === 0) {
     return (
-      <Fieldset title={title}>
+      <Fieldset title={title} required={required}>
         <Input value={village} onChange={(e) => onVillage(e.target.value)} placeholder="ບ້ານ" />
         <Input value={district} onChange={(e) => onDistrict(e.target.value)} placeholder="ເມືອງ" />
         <Input value={province} onChange={(e) => onProvince(e.target.value)} placeholder="ແຂວງ" />
@@ -58,7 +60,7 @@ export function AddressGroup({
   }
 
   return (
-    <Fieldset title={title}>
+    <Fieldset title={title} required={required}>
       <Input value={village} onChange={(e) => onVillage(e.target.value)} placeholder="ບ້ານ" />
 
       <Select
@@ -104,10 +106,21 @@ export function AddressGroup({
   );
 }
 
-function Fieldset({ title, children }: { title: string; children: React.ReactNode }) {
+function Fieldset({
+  title,
+  required,
+  children,
+}: {
+  title: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-2 rounded-md border p-3">
-      <p className="text-sm font-medium">{title}</p>
+      <p className="text-sm font-medium">
+        {title}
+        {required && <span className="text-red-500"> *</span>}
+      </p>
       <div className="grid gap-2 sm:grid-cols-3">{children}</div>
     </div>
   );

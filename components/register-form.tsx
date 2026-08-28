@@ -123,8 +123,11 @@ export function RegisterForm({
           });
         }
         setDone(true);
-      } catch {
-        setError("ເກີດຂໍ້ຜິດພາດ ກະລຸນາລອງໃໝ່ອີກຄັ້ງ");
+      } catch (e) {
+        // Surface the real reason. Swallowing it left "ເກີດຂໍ້ຜິດພາດ" as the
+        // only clue, which is indistinguishable from a network blip.
+        const detail = e instanceof Error ? e.message : String(e);
+        setError(`ລົງທະບຽນບໍ່ສຳເລັດ: ${detail}`);
       }
     });
   }
@@ -146,21 +149,36 @@ export function RegisterForm({
     );
   }
 
-  const photoOk = !builtin.required("_photo") || pendingFiles.some((f) => f.docType === "photo");
-  const idCardOk = !builtin.required("_id_card") || pendingFiles.some((f) => f.docType === "id_card");
-  const permAddrOk =
-    !builtin.required("_perm_address") || (permVillage.trim() && permDistrict.trim() && permProvince.trim());
-  const curAddrOk =
-    !builtin.required("_cur_address") || (curVillage.trim() && curDistrict.trim() && curProvince.trim());
-  const valid =
-    (!builtin.required("_name") || name.trim()) &&
-    (!builtin.required("_phone") || phone.trim()) &&
-    (!builtin.required("_dob") || dob) &&
-    (!builtin.required("_countries") || selectedCountries.length > 0) &&
-    photoOk &&
-    idCardOk &&
-    permAddrOk &&
-    curAddrOk;
+  // Name what is still missing rather than just grey out the button — several
+  // required things (the photo, both addresses) are easy to scroll past, and a
+  // disabled button with no explanation reads as the form being broken.
+  const addressComplete = (v: string, d: string, p: string) => !!(v.trim() && d.trim() && p.trim());
+  const missing = [
+    [builtin.required("_photo") && !pendingFiles.some((f) => f.docType === "photo"),
+      builtin.label("_photo", "ຮູບຖ່າຍ 3x4")],
+    [builtin.required("_name") && !name.trim(), builtin.label("_name", "ຊື່ ແລະ ນາມສະກຸນ")],
+    [builtin.required("_phone") && !phone.trim(), builtin.label("_phone", "ເບີໂທລະສັບ")],
+    [builtin.required("_dob") && !dob, builtin.label("_dob", "ວັນເດືອນປີເກີດ")],
+    [builtin.required("_perm_address") && !addressComplete(permVillage, permDistrict, permProvince),
+      builtin.label("_perm_address", "ທີ່ຢູ່ຕາມສຳມະໂນຄົວ")],
+    [builtin.required("_cur_address") && !addressComplete(curVillage, curDistrict, curProvince),
+      builtin.label("_cur_address", "ທີ່ຢູ່ປັດຈຸບັນ")],
+    [builtin.required("_countries") && selectedCountries.length === 0,
+      builtin.label("_countries", "ປະເທດທີ່ສົນໃຈ")],
+    [builtin.required("_id_card") && !pendingFiles.some((f) => f.docType === "id_card"),
+      builtin.label("_id_card", "ບັດປະຈຳຕົວ / ສຳມະໂນຄົວ")],
+    // Custom required fields were never enforced, so a staff member could mark
+    // one required and it would quietly do nothing.
+    ...customFields
+      .filter((f) => f.required)
+      .map((f) => {
+        const v = customValues[f.field_key];
+        const empty = v === undefined || v === "" || (Array.isArray(v) && v.length === 0);
+        return [empty, f.label] as [boolean, string];
+      }),
+  ].filter(([unmet]) => unmet).map(([, label]) => label as string);
+
+  const valid = missing.length === 0;
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
@@ -228,8 +246,9 @@ export function RegisterForm({
             onVillage={setPermVillage}
             onDistrict={setPermDistrict}
             onProvince={setPermProvince}
-                provinces={provinces}
-                districts={districts}
+            provinces={provinces}
+            districts={districts}
+            required={builtin.required("_perm_address")}
           />
           <AddressGroup
             title={builtin.label("_cur_address", "ທີ່ຢູ່ປັດຈຸບັນ")}
@@ -239,8 +258,9 @@ export function RegisterForm({
             onVillage={setCurVillage}
             onDistrict={setCurDistrict}
             onProvince={setCurProvince}
-                provinces={provinces}
-                districts={districts}
+            provinces={provinces}
+            districts={districts}
+            required={builtin.required("_cur_address")}
           />
 
           <div className="space-y-1.5">
@@ -330,6 +350,17 @@ export function RegisterForm({
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+
+          {missing.length > 0 && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">
+              <p className="font-medium text-amber-900">ຍັງຕື່ມບໍ່ຄົບ {missing.length} ຢ່າງ</p>
+              <ul className="mt-1 list-inside list-disc text-amber-800">
+                {missing.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <Button
             className="w-full bg-emerald-600 hover:bg-emerald-700"
