@@ -40,9 +40,14 @@ export async function registerWorker(
 ) {
   const supabase = await createClient();
   const id = input.id ?? randomUUID();
+  // A plain insert, not an upsert: anon holds INSERT on worker_profiles but
+  // never SELECT, and resolving ON CONFLICT needs SELECT — so an upsert here
+  // fails for every anonymous registration with "42501 permission denied".
+  // Granting anon SELECT would publish every applicant's record, and there is
+  // nothing to resolve anyway: both forms mint a fresh id per visit.
   const { error } = await supabase
     .from("worker_profiles")
-    .upsert(
+    .insert(
       {
         id,
         name: input.name,
@@ -58,9 +63,7 @@ export async function registerWorker(
         preferred_countries: input.preferredCountries,
         preferred_categories: input.preferredCategories ?? [],
         custom_fields: input.customFields ?? {},
-      },
-      { onConflict: "id", ignoreDuplicates: true }
-    );
+      });
   if (error) throw error;
   return { id };
 }
